@@ -1,9 +1,25 @@
 """Comparables de rue et de commune, valeur d'un bien, loyer de référence."""
 import math
 import statistics
+import unicodedata
 from collections import defaultdict
 
 from . import donnees as D
+
+
+def _nu(texte):
+    """Nom comparable : majuscules, sans accents, espaces réduits.
+
+    Personne ne tape les accents de façon fiable : « Ecouen » doit trouver « Écouen », sinon le
+    moteur rend zéro comparable et le dit sans expliquer pourquoi. Comparer des noms français
+    bruts, c'est se condamner à des résultats vides et inexplicables.
+    """
+    t = unicodedata.normalize("NFKD", (texte or "").strip().upper())
+    t = "".join(c for c in t if not unicodedata.combining(c))
+    # traits d'union et apostrophes deviennent des espaces : « Villiers-le-Bel » doit répondre
+    # aussi bien que « villiers le bel », et « Boissy-l'Aillerie » que « Boissy l Aillerie »
+    t = t.replace("-", " ").replace("'", " ").replace("’", " ")
+    return " ".join(t.split())
 
 
 # ---------------------------------------------------------------- comparables
@@ -41,11 +57,11 @@ def comparables(commune=None, insee=None, voie=None, type_local="Appartement",
     for v in D.ventes_actualisees(annees, type_local):
         if insee and v["insee"] != insee:
             continue
-        if not insee and cible and v["commune"].upper() != cible:
+        if not insee and cible and _nu(v["commune"]) != _nu(cible):
             continue
         if not (lo <= v["surface"] <= hi):
             continue
-        if voie_upper and voie_upper not in v["voie"]:
+        if voie_upper and _nu(voie_upper) not in _nu(v["voie"]):
             continue
         sel.append(v)
     return sel
@@ -100,7 +116,8 @@ def comparables_avec_repli(commune=None, insee=None, voie=None, type_local="Appa
     meilleur, description = None, ""
     for annees, desc in essais:
         v = comparables(commune=commune, insee=insee, voie=voie, type_local=type_local,
-                        surface=surface, tolerance=tolerance, annees=annees)
+                        type_surface=type_local, surface=surface, tolerance=tolerance,
+                        annees=annees)
         if meilleur is None or len(v) > len(meilleur):
             meilleur, description = v, desc
         if len(v) >= D.MIN_VENTES:
@@ -143,7 +160,7 @@ def index_communes():
     agg, infos = defaultdict(lambda: defaultdict(int)), {}
     for t in ("Appartement", "Maison"):
         for v in D.ventes_multi(D.ANNEES, t):
-            nom = v["commune"].upper()
+            nom = _nu(v["commune"])
             if not nom:
                 continue
             agg[nom][v["insee"]] += 1
@@ -172,12 +189,12 @@ def resout_commune(reference):
                "source": "code INSEE"}
         _commune_cache[ref] = res
         return res
-    par_insee = agg.get(ref.upper())
+    cible = _nu(ref)
+    par_insee = agg.get(cible)
     if not par_insee:
         # Le nom saisi n'est pas exactement celui de l'état civil (« Paris 11e » pour
         # « Paris 11e Arrondissement ») : on cherche par préfixe, puis par inclusion, et on
         # retient la commune la mieux servie. Le nom retenu est renvoyé, donc vérifiable.
-        cible = ref.upper()
         for test in (lambda k: k.startswith(cible), lambda k: cible in k):
             candidats = {k: v for k, v in agg.items() if test(k)}
             if candidats:

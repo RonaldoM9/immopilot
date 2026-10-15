@@ -199,15 +199,22 @@ def resout_commune(reference):
     return res
 
 
-def controle_vraisemblance(departement="95", annee=2025, type_local="Appartement",
+def controle_vraisemblance(departement=None, annee=2025, type_local="Appartement",
                            bornes=(800, 12_000)):
-    """Garde-fou permanent : la médiane départementale doit rester plausible.
-    C'est ce contrôle qui a attrapé « Eaubonne à 1 022 EUR/m² » le 14/10/2026."""
-    v = D.ventes(annee, type_local)
+    """Garde-fou permanent : la médiane du périmètre doit rester plausible.
+
+    C'est ce contrôle qui a attrapé « Eaubonne à 1 022 EUR/m² » le 14/10/2026. Il porte sur
+    **tous les départements chargés** : un contrôle réduit au 95 ne dirait plus rien d'un
+    périmètre qui couvre l'Île-de-France.
+    """
+    deps = D.perimetre(departement)
+    v = D.ventes_multi((annee,), type_local, deps)
     med = D.mediane([x["eur_m2"] for x in v])
     ok = bornes[0] <= med <= bornes[1]
     return {"median_departementale": med, "n": len(v), "plausible": ok,
-            "raison": f"mediane {med:.0f} EUR/m2 dans les bornes {bornes}" if ok
+            "departements": list(deps),
+            "raison": f"mediane {med:.0f} EUR/m2 dans les bornes {bornes} "
+                      f"({len(deps)} departements)" if ok
                       else f"mediane {med:.0f} EUR/m2 HORS bornes {bornes} : filtre a verifier"}
 
 
@@ -255,15 +262,17 @@ def valeur_estimee(modele, surface, terrain=0.0):
 
 # ---------------------------------------------------------------- loyer
 def loyer_reference(insee=None, commune=None, type_local="Appartement"):
-    """Loyer d'annonce au m² de la carte des loyers du ministère, avec ses observations."""
+    """Loyer d'annonce au m² de la carte des loyers du ministère, avec ses observations.
+
+    La recherche par nom passe par `resout_commune` : elle doit trouver Saint-Denis comme Écouen,
+    donc parcourir tout le périmètre chargé et non un département supposé.
+    """
     loy = D.loyers()
     ref = loy.get(insee) if insee else None
     if not ref and commune:
-        for v in D.ventes(2025, type_local):
-            if v["commune"].upper() == commune.strip().upper() and v["insee"] in loy:
-                ref = loy[v["insee"]]
-                insee = v["insee"]
-                break
+        r = resout_commune(commune)
+        if r and loy.get(r.get("insee")):
+            ref, insee = loy[r["insee"]], r["insee"]
     if not ref:
         return None
     return {"loyer_m2": ref[0], "observations": ref[1], "insee": insee,

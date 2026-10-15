@@ -161,6 +161,13 @@ class Handler(BaseHTTPRequestHandler):
             if route in ("/api/dossier", "/api/dossier.md"):
                 entree = corps.get("dossier") if isinstance(corps, dict) else None
                 entree = entree or corps or {}
+                manquants = [c for c in ("commune", "surface", "prix_demande") if not entree.get(c)]
+                if manquants:
+                    return self._envoie({"erreur": "champs obligatoires manquants",
+                                         "manquants": manquants,
+                                         "attendu": {"commune": "Groslay", "surface": 30,
+                                                     "prix_demande": 110000,
+                                                     "loyer_mensuel_ht": 637}}, 400)
                 t0 = time.time()
                 dos = Dos.construire(entree)
                 dos["_duree_ms"] = int((time.time() - t0) * 1000)

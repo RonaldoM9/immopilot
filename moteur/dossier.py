@@ -106,7 +106,7 @@ def construire(d):
     perimetre = f"{ou} — {description_reference}"
 
     # --- loyer et rendement
-    loyer_ref = analyse.loyer_reference(commune=commune, type_local=type_local)
+    loyer_ref = analyse.loyer_reference(insee=insee, commune=commune, type_local=type_local)
     loyer = None
     if loyer_ref:
         mensuel = float(d["loyer_mensuel_ht"]) if d.get("loyer_mensuel_ht") else \

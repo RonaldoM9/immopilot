@@ -1,6 +1,7 @@
 """Comparables de rue et de commune, valeur d'un bien, loyer de référence."""
 import math
 import statistics
+from collections import defaultdict
 
 from . import donnees as D
 
@@ -27,6 +28,13 @@ def comparables(commune=None, insee=None, voie=None, type_local="Appartement",
         hi = min(hi, surface * (1 + tol))
     cible = (commune or "").strip().upper()
     voie_upper = (voie or "").strip().upper()
+
+    # Un même nom de commune peut exister dans deux départements : on ne mélange jamais deux
+    # marchés dans une même médiane. La commune retenue est celle qui compte le plus de ventes.
+    if not insee and cible:
+        r = resout_commune(cible)
+        if r and r.get("insee"):
+            insee = r["insee"]
 
     sel = []
     for v in D.ventes_actualisees(annees, type_local):
@@ -73,8 +81,8 @@ def synthese(ventes):
             "solide": solide, "raison": raison}
 
 
-def comparables_avec_repli(commune=None, voie=None, type_local="Appartement", surface=None,
-                           tolerance=0.35):
+def comparables_avec_repli(commune=None, insee=None, voie=None, type_local="Appartement",
+                           surface=None, tolerance=0.35):
     """Comparables en cascade — la bande de surface reste stricte, la fenêtre s'élargit.
 
     Un comparable doit avoir une **taille proche** : à Écouen, élargir la bande autour d'une
@@ -90,8 +98,8 @@ def comparables_avec_repli(commune=None, voie=None, type_local="Appartement", su
     ]
     meilleur, description = None, ""
     for annees, desc in essais:
-        v = comparables(commune=commune, voie=voie, type_local=type_local, surface=surface,
-                        tolerance=tolerance, annees=annees)
+        v = comparables(commune=commune, insee=insee, voie=voie, type_local=type_local,
+                        surface=surface, tolerance=tolerance, annees=annees)
         if meilleur is None or len(v) > len(meilleur):
             meilleur, description = v, desc
         if len(v) >= D.MIN_VENTES:
@@ -116,6 +124,78 @@ def prix_par_voie(commune=None, insee=None, type_local="Appartement",
                     "dispersion": s["dispersion"], "median_surface": s["median_surface"]})
     out.sort(key=lambda x: x["median_eur_m2"])
     return out
+
+
+_index_communes = None
+_commune_cache = {}
+
+
+def index_communes():
+    """Index {NOM EN MAJUSCULES: {insee: nombre de ventes}} construit une seule fois.
+
+    Résoudre un nom de commune en parcourant toutes les ventes à chaque appel coûtait des
+    secondes par dossier dès que huit départements étaient chargés ; l'index le fait une fois.
+    """
+    global _index_communes
+    if _index_communes is not None:
+        return _index_communes
+    agg, infos = defaultdict(lambda: defaultdict(int)), {}
+    for t in ("Appartement", "Maison"):
+        for v in D.ventes_multi(D.ANNEES, t):
+            nom = v["commune"].upper()
+            if not nom:
+                continue
+            agg[nom][v["insee"]] += 1
+            infos[v["insee"]] = (v["commune"], v["departement"])
+    _index_communes = (agg, infos)
+    return _index_communes
+
+
+def resout_commune(reference):
+    """Retrouve la commune visée à partir d'un nom ou d'un code INSEE.
+
+    Avec plusieurs départements chargés, un nom peut exister deux fois (« Sainte-Colombe »,
+    « Villiers »…). On retient alors la commune qui compte le plus de ventes, et on le dit :
+    une homonymie silencieuse fausserait tout le dossier. Un code INSEE, lui, ne prête à
+    aucune confusion.
+    """
+    ref = (reference or "").strip()
+    if not ref:
+        return None
+    if ref in _commune_cache:
+        return _commune_cache[ref]
+    agg, infos = index_communes()
+    if ref.isdigit() and len(ref) >= 5:
+        commune, dep = infos.get(ref, (ref, None))
+        res = {"insee": ref, "commune": commune, "departement": dep, "homonymes": 0,
+               "source": "code INSEE"}
+        _commune_cache[ref] = res
+        return res
+    par_insee = agg.get(ref.upper())
+    if not par_insee:
+        # Le nom saisi n'est pas exactement celui de l'état civil (« Paris 11e » pour
+        # « Paris 11e Arrondissement ») : on cherche par préfixe, puis par inclusion, et on
+        # retient la commune la mieux servie. Le nom retenu est renvoyé, donc vérifiable.
+        cible = ref.upper()
+        for test in (lambda k: k.startswith(cible), lambda k: cible in k):
+            candidats = {k: v for k, v in agg.items() if test(k)}
+            if candidats:
+                meilleur = max(candidats.items(),
+                               key=lambda kv: sum(kv[1].values()))
+                par_insee = meilleur[1]
+                break
+    if not par_insee:
+        return None
+    classement = sorted(par_insee.items(), key=lambda kv: -kv[1])
+    insee, n = classement[0]
+    commune, dep = infos.get(insee, (ref, None))
+    res = {"insee": insee, "commune": commune, "departement": dep, "ventes": n,
+           "homonymes": len(classement) - 1, "source": "nom de commune",
+           "autres": [{"insee": i, "commune": infos.get(i, ("", None))[0],
+                       "departement": infos.get(i, ("", None))[1], "ventes": c}
+                      for i, c in classement[1:4]]}
+    _commune_cache[ref] = res
+    return res
 
 
 def controle_vraisemblance(departement="95", annee=2025, type_local="Appartement",

@@ -13,6 +13,7 @@ import csv
 import io
 import math
 import os
+import re
 import statistics
 from collections import defaultdict
 
@@ -29,6 +30,34 @@ PRIX_MIN_M2, PRIX_MAX_M2 = 500, 25_000
 SURF_APPART = (15.0, 45.0)
 SURF_MAISON = (30.0, 300.0)
 MIN_VENTES = 5
+
+# Périmètre de données : un fichier DVF par département et par millésime. Le moteur ne suppose
+# pas le 95 en dur — il travaille sur les départements réellement présents dans donnees/.
+DEPARTEMENTS_DEFAUT = ("95",)
+_cible_perimetre = None
+
+
+def departements_disponibles():
+    """Départements réellement téléchargés (détectés sur les fichiers présents)."""
+    if not os.path.isdir(DONNEES):
+        return DEPARTEMENTS_DEFAUT
+    trouves = {m.group(1) for m in
+               (re.match(r"dvf(\d{2,3})_\d{4}\.csv$", n) for n in os.listdir(DONNEES)) if m}
+    return tuple(sorted(trouves)) or DEPARTEMENTS_DEFAUT
+
+
+def perimetre(departements=None):
+    """Départements sur lesquels porte le chargement courant."""
+    if departements:
+        return tuple(departements)
+    return _cible_perimetre or departements_disponibles()
+
+
+def fixe_perimetre(departements=None):
+    """Force le périmètre du moteur (export dédié, démonstration, test). None = tous."""
+    global _cible_perimetre
+    _cible_perimetre = tuple(departements) if departements else None
+    return perimetre()
 
 _cache_dvf = {}
 
@@ -57,9 +86,12 @@ def ventes(annee, type_local="Appartement", departement="95"):
     if cle in _cache_dvf:
         return _cache_dvf[cle]
 
-    chemin = os.path.join(DONNEES, f"dvf95_{annee}.csv")
+    chemin = os.path.join(DONNEES, f"dvf{departement}_{annee}.csv")
     if not os.path.exists(chemin):
-        chemin = os.path.join(DONNEES, "dvf95_2025.csv") if annee == 2025 else chemin
+        # Pas de repli silencieux sur un autre département : mélanger deux marchés serait pire
+        # que ne rien avoir. Un département absent rend simplement une liste vide.
+        _cache_dvf[cle] = []
+        return []
 
     par_mutation = defaultdict(list)
     with open(chemin, encoding="utf-8") as f:
@@ -95,6 +127,7 @@ def ventes(annee, type_local="Appartement", departement="95"):
                 continue
             out.append({
                 "annee": annee, "date": l.get("date_mutation", ""),
+                "departement": departement,
                 "commune": (l.get("nom_commune") or "").strip(),
                 "cp": (l.get("code_postal") or "").strip(),
                 "insee": (l.get("code_commune") or "").strip(),
@@ -110,17 +143,18 @@ def ventes(annee, type_local="Appartement", departement="95"):
     return out
 
 
-def ventes_multi(annees=ANNEES, type_local="Appartement"):
+def ventes_multi(annees=ANNEES, type_local="Appartement", departements=None):
     out = []
-    for a in annees:
-        out.extend(ventes(a, type_local))
+    for dep in perimetre(departements):
+        for a in annees:
+            out.extend(ventes(a, type_local, dep))
     return out
 
 
 _indice_cache = {}
 
 
-def indice_annuel(type_local="Appartement", annees=ANNEES):
+def indice_annuel(type_local="Appartement", annees=ANNEES, departements=None):
     """Indice départemental des prix au m², base 1.0 = la dernière année connue.
 
     Sert à **actualiser les comparables anciens** : le marché du Val-d'Oise a perdu 13 % de son
@@ -128,71 +162,94 @@ def indice_annuel(type_local="Appartement", annees=ANNEES):
     de ventes gonfle la médiane — c'est l'erreur qui a été mesurée le 15/10/2026 (Groslay
     passait de 3 526 à 4 029 EUR/m² en passant d'un an à trois ans de données).
     """
-    cle = (type_local, annees)
+    deps = perimetre(departements)
+    cle = (type_local, tuple(annees), deps)
     if cle in _indice_cache:
         return _indice_cache[cle]
-    med = {}
-    for a in annees:
-        v = ventes(a, type_local)
-        med[a] = mediane([x["eur_m2"] for x in v])
     derniere = max(annees)
-    ref = med.get(derniere) or 0
-    indice = {a: (ref / m if m else 1.0) for a, m in med.items()}
-    _indice_cache[cle] = {"indice": indice, "mediane_par_annee": med, "annee_reference": derniere}
+    par_dep, medianes = {}, {}
+    for dep in deps:
+        med = {}
+        for a in annees:
+            med[a] = mediane([x["eur_m2"] for x in ventes(a, type_local, dep)])
+        ref = med.get(derniere) or 0
+        par_dep[dep] = {a: (ref / m if m else 1.0) for a, m in med.items()}
+        medianes[dep] = med
+    # Indice « régional » publié : la médiane des indices départementaux, pour l'affichage.
+    median_regional = {a: mediane([par_dep[d][a] for d in deps if d in par_dep]) for a in annees}
+    _indice_cache[cle] = {"indice": par_dep, "mediane_par_annee": medianes,
+                          "indice_regional": median_regional, "annee_reference": derniere,
+                          "departements": list(deps)}
     return _indice_cache[cle]
 
 
 _actu_cache = {}
 
 
-def ventes_actualisees(annees=ANNEES, type_local="Appartement"):
+def ventes_actualisees(annees=ANNEES, type_local="Appartement", departements=None):
     """Ventes dont le prix au m² est ramené au niveau de la dernière année connue.
 
     Résultat mis en cache : la webapp appelle cette fonction à chaque dossier, et recopier
     deux cent mille ventes à chaque clic se sentirait.
     """
-    cle = (tuple(annees), type_local)
+    deps = perimetre(departements)
+    cle = (tuple(annees), type_local, deps)
     if cle in _actu_cache:
         return _actu_cache[cle]
-    idx = indice_annuel(type_local, annees)["indice"]
+    idx = indice_annuel(type_local, annees, deps)["indice"]
     out = []
-    for v in ventes_multi(annees, type_local):
+    for v in ventes_multi(annees, type_local, deps):
         w = dict(v)
+        # chacun est ramené au niveau de sa propre année de référence, département par département :
+        # l'Île-de-France et le Val-d'Oise n'ont pas connu la même baisse depuis 2022
         w["eur_m2_brut"] = v["eur_m2"]
-        w["eur_m2"] = v["eur_m2"] * idx.get(v["annee"], 1.0)
+        facteur = (idx.get(v.get("departement")) or {}).get(v["annee"], 1.0)
+        w["eur_m2"] = v["eur_m2"] * facteur
         w["valeur_actualisee"] = w["eur_m2"] * v["surface"]
         out.append(w)
     _actu_cache[cle] = out
     return out
 
 
-def precharge():
+def precharge(departements=None):
     """Charge tout ce dont un dossier a besoin, une fois. Appelé au démarrage du serveur."""
+    deps = perimetre(departements)
     for type_local in ("Appartement", "Maison"):
-        indice_annuel(type_local)
+        indice_annuel(type_local, ANNEES, deps)
         for annees in (ANNEES_REFERENCE, ANNEES):
-            ventes_actualisees(annees, type_local)
-    loyers_cache = loyers()
-    return {"ventes_appart": len(_actu_cache[((tuple(ANNEES_REFERENCE)), "Appartement")]),
-            "ventes_maison": len(_actu_cache[((tuple(ANNEES_REFERENCE)), "Maison")]),
+            ventes_actualisees(annees, type_local, deps)
+    loyers_cache = loyers(deps)
+    return {"departements": list(deps),
+            "ventes_appart": len(_actu_cache[(tuple(ANNEES_REFERENCE), "Appartement", deps)]),
+            "ventes_maison": len(_actu_cache[(tuple(ANNEES_REFERENCE), "Maison", deps)]),
             "communes_loyers": len(loyers_cache)}
 
 
-def loyers(departement="95"):
+_loyers_cache = {}
+
+
+def loyers(departements=None):
     """Carte des loyers d'annonce du ministère : {insee: (loyer_m2, nb_observations)}.
-    Millésime 2025, appartements 1-2 pièces."""
+
+    Le fichier couvre la France entière (34 900 communes) : on filtre sur le périmètre chargé.
+    Millésime 2025, appartements 1-2 pièces.
+    """
+    deps = perimetre(departements)
+    if deps in _loyers_cache:
+        return _loyers_cache[deps]
     chemin = os.path.join(DONNEES, "loyers_12p_2025.csv")
     if not os.path.exists(chemin):
         return {}
     out = {}
     for r in csv.DictReader(_ouvre(chemin), delimiter=";"):
-        if r.get("DEP") != departement:
+        if r.get("DEP") not in deps:
             continue
         try:
             loy = float(r["loypredm2"].replace(",", "."))
         except ValueError:
             continue
         out[r["INSEE_C"]] = (loy, int(r["nbobs_com"] or 0))
+    _loyers_cache[deps] = out
     return out
 
 

@@ -154,6 +154,7 @@ code{background:#0c1d2b;padding:1px 6px;border-radius:6px;font-size:12px}
   </div>
   <div class="card">
     <div class="formgrid c3">
+      <div class="field"><label>Département</label><select id="f-dep"></select></div>
       <div class="field"><label>Rechercher une commune</label><input id="f-recherche" placeholder="ecouen, garges…"></div>
       <div class="field"><label>Trier par</label><select id="f-tri">
         <option value="rendement">rendement brut</option>
@@ -432,6 +433,14 @@ function tableauVoies(voies){
 }
 
 /* ------------------------------------------------------------------ MARCHE */
+async function chargeDepartement(dep){
+  MARCHE = await api('/api/marche/' + dep);
+  $('#dl-communes').innerHTML = MARCHE.communes.map(c=>`<option value="${esc(c.nom)}">`).join('');
+  $('#m-marche').textContent = `${MARCHE.nb_communes} communes · ${MARCHE.nb_voies} voies · `
+    + `département ${dep} · ${MARCHE.genere_le}`;
+  $('#f-recherche').value = '';
+  rendreMarche();
+}
 function rendreMarche(){
   if(!MARCHE){ $('#table-marche').innerHTML='<tr><td class="muted">chargement…</td></tr>'; return; }
   const q = ($('#f-recherche').value||'').toLowerCase();
@@ -581,15 +590,17 @@ function tab(nom){
     $('#m-banc').textContent = s.banc_essai+' (20 dossiers dont 5 pièges, 6 contrôles de données)';
   }catch(e){ $('#pillMoteur').textContent='moteur injoignable'; }
   try{
-    MARCHE = await api('/api/marche');
-    $('#dl-communes').innerHTML = MARCHE.communes.map(c=>`<option value="${esc(c.nom)}">`).join('');
-    $('#m-marche').textContent = `${MARCHE.nb_communes} communes · ${MARCHE.nb_voies} voies · ${MARCHE.genere_le}`;
-    rendreMarche();
+    const INDEX = await api('/api/marche');
+    $('#f-dep').innerHTML = INDEX.departements.map(d =>
+      `<option value="${d.code}">département ${d.code} — ${d.communes} communes</option>`).join('');
+    if ([...$('#f-dep').options].some(o => o.value === '95')) $('#f-dep').value = '95';
+    await chargeDepartement($('#f-dep').value);
   }catch(e){ $('#m-marche').textContent = 'données absentes : lancer scripts/exporte_marche.py'; }
   try{ PAT = await api('/api/patrimoine'); rendreFoyer(); }catch(e){}
   ['#f-commune'].forEach(s=>$(s).addEventListener('change',majVoies));
   $('#f-surface').addEventListener('change',majVoies);
   $('#f-recherche').addEventListener('input',rendreMarche);
+  $('#f-dep').addEventListener('change', e => chargeDepartement(e.target.value).catch(err => toast('département indisponible : ' + err.message)));
   ['#f-tri','#f-filtre'].forEach(s=>$(s).addEventListener('change',rendreMarche));
   // lien de démonstration : /?demo=1 remplit un bien d'exemple et tranche tout seul
   if(location.search.includes('demo')){

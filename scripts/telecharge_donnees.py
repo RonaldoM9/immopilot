@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
-"""Retélécharge les données sources du moteur (elles ne sont pas dans le dépôt : 52 Mo).
+"""Retélécharge les données sources du moteur (elles ne sont pas dans le dépôt).
 
-    python3 scripts/telecharge_donnees.py
+    python3 scripts/telecharge_donnees.py                          # le 95 seul (défaut)
+    python3 scripts/telecharge_donnees.py --departements 75,77,78,91,92,93,94,95
+    python3 scripts/telecharge_donnees.py --departements 27,60,76 --annees 2023,2024,2025
 
-Prix : DVF (Demandes de valeurs foncières), Etalab/geo-dvf, fichier départemental par millésime.
-Loyers : carte des loyers d'annonce du ministère chargé du Logement — le fichier n'a pas d'URL
-stable, la page du jeu de données est indiquée ; déposer le CSV dans donnees/ sous le nom attendu.
+Prix : DVF (Demandes de valeurs foncières), Etalab/geo-dvf, un fichier compressé par département
+et par millésime (environ 1,4 Mo compressé, soit 6 à 10 Mo une fois décompressé).
+Loyers : carte des loyers d'annonce du ministère — le fichier couvre déjà toute la France, il n'a
+pas d'URL stable : la page du jeu de données est indiquée, à déposer dans donnees/.
 """
+import argparse
 import os
 import subprocess
 import sys
 
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DONNEES = os.path.join(RACINE, "donnees")
-ANNNEES = (2021, 2022, 2023, 2024, 2025)
-DEPARTEMENT = "95"
-# Les fichiers departementaux sont publies compresses (.csv.gz) sur geo-dvf.
 GABARIT = "https://files.data.gouv.fr/geo-dvf/latest/csv/{a}/departements/{d}.csv.gz"
 PAGE_LOYERS = ("https://www.data.gouv.fr/fr/datasets/"
                "carte-des-loyers-indicateurs-de-loyers-dannonce-par-commune-en-2025/")
-ATTENDU_LOYERS = "loyers_12p_2025.csv"
+FICHIER_LOYERS = "loyers_12p_2025.csv"
 
 
 def telecharge(url, chemin):
@@ -31,7 +31,7 @@ def telecharge(url, chemin):
         return False, (r.stderr or "").strip()[:120]
     d = subprocess.run(["gzip", "-dc", gz], capture_output=True)
     if d.returncode != 0:
-        return False, "decompression impossible"
+        return False, "décompression impossible"
     with open(chemin, "wb") as f:
         f.write(d.stdout)
     os.remove(gz)
@@ -46,37 +46,47 @@ def verifie(chemin):
     return ok, entete[:80], n
 
 
-def main():
-    global DONNEES
-    if len(sys.argv) > 1:
-        DONNEES = sys.argv[1]
-    os.makedirs(DONNEES, exist_ok=True)
-    echecs = 0
-    for annee in ANNNEES:
-        chemin = os.path.join(DONNEES, f"dvf{DEPARTEMENT}_{annee}.csv")
-        if os.path.exists(chemin) and os.path.getsize(chemin) > 100_000:
-            ok, entete, n = verifie(chemin)
-            print(f"  {annee} : déjà présent ({n:,} lignes)")
-            continue
-        print(f"  {annee} : téléchargement…", end=" ", flush=True)
-        ok, err = telecharge(GABARIT.format(a=annee, d=DEPARTEMENT), chemin)
-        if not ok:
-            print(f"échec ({err})")
-            echecs += 1
-            continue
-        ok, entete, n = verifie(chemin)
-        print(f"{n:,} lignes, entête conforme : {ok}" if ok else f"entête inattendue : {entete}")
-        echecs += 0 if ok else 1
+def main(argv=None):
+    ap = argparse.ArgumentParser(description="Télécharge les données DVF et vérifie l'entête.")
+    ap.add_argument("--departements", default="95",
+                    help="codes séparés par des virgules, ex. 75,77,78,91,92,93,94,95")
+    ap.add_argument("--annees", default="2021,2022,2023,2024,2025")
+    ap.add_argument("--dossier", default=os.path.join(RACINE, "donnees"))
+    a = ap.parse_args(argv)
 
-    chemin_loyers = os.path.join(DONNEES, ATTENDU_LOYERS)
+    departements = [d.strip() for d in a.departements.split(",") if d.strip()]
+    annees = [int(x) for x in a.annees.split(",") if x.strip()]
+    os.makedirs(a.dossier, exist_ok=True)
+    print(f"départements : {', '.join(departements)} · millésimes : {annees}")
+
+    echecs, telecharges = 0, 0
+    for dep in departements:
+        for annee in annees:
+            chemin = os.path.join(a.dossier, f"dvf{dep}_{annee}.csv")
+            if os.path.exists(chemin) and os.path.getsize(chemin) > 100_000:
+                print(f"  {dep} {annee} : déjà présent")
+                continue
+            print(f"  {dep} {annee} : téléchargement…", end=" ", flush=True)
+            ok, err = telecharge(GABARIT.format(a=annee, d=dep), chemin)
+            if not ok:
+                print(f"échec ({err})")
+                echecs += 1
+                continue
+            ok, entete, n = verifie(chemin)
+            print(f"{n:,} lignes" + ("" if ok else f" — ENTÊTE INATTENDUE : {entete}"))
+            echecs += 0 if ok else 1
+            telecharges += 1
+
+    chemin_loyers = os.path.join(a.dossier, FICHIER_LOYERS)
     if os.path.exists(chemin_loyers):
-        print(f"  loyers : {ATTENDU_LOYERS} présent")
+        print(f"  loyers : {FICHIER_LOYERS} présent (couvre la France entière)")
     else:
         print(f"  loyers : MANQUANT — à télécharger sur\n    {PAGE_LOYERS}\n"
-              f"    puis à déposer dans donnees/ sous le nom {ATTENDU_LOYERS}")
+              f"    puis à déposer dans donnees/ sous le nom {FICHIER_LOYERS}")
         echecs += 1
 
-    print("\nAucun problème." if not echecs else f"\n{echecs} élément(s) à compléter.")
+    print(f"\n{telecharges} fichier(s) téléchargé(s). "
+          + ("Aucun problème." if not echecs else f"{echecs} problème(s)."))
     return 1 if echecs else 0
 
 

@@ -19,6 +19,7 @@ L'interface est un écran, pas une autorité.
 """
 import json
 import os
+import re
 import sys
 import threading
 import time
@@ -129,7 +130,13 @@ class Handler(BaseHTTPRequestHandler):
                                      "marche": os.path.exists(os.path.join(DATA, "marche.json")),
                                      "heure": time.strftime("%Y-%m-%d %H:%M:%S")})
             if route == "/api/marche":
-                return self._fichier(os.path.join("data", "marche.json"),
+                return self._fichier(os.path.join("data", "index.json"),
+                                     "application/json; charset=utf-8")
+            if route.startswith("/api/marche/"):
+                dep = route.rsplit("/", 1)[-1]
+                if not re.fullmatch(r"\d{2,3}", dep):
+                    return self._envoie({"erreur": "code de département invalide"}, 400)
+                return self._fichier(os.path.join("data", f"marche_{dep}.json"),
                                      "application/json; charset=utf-8")
             if route == "/api/patrimoine":
                 return self._envoie(lit_json(PATRIMOINE, PATRIMOINE_DEFAUT))

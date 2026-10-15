@@ -91,10 +91,12 @@ def dossier_html(entree, titre, sous_titre):
 
 
 def main():
-    chemin_marche = os.path.join(RACINE, "webapp", "data", "marche.json")
-    with open(chemin_marche, encoding="utf-8") as f:
-        marche = json.load(f)
-    print(f"marché : {marche['nb_communes']} communes, {marche['nb_voies']} voies")
+    chemin_index = os.path.join(RACINE, "docs", "data", "index.json")
+    with open(chemin_index, encoding="utf-8") as f:
+        index = json.load(f)
+    total = sum(d["communes"] for d in index["departements"])
+    print(f"marché : {len(index['departements'])} départements, {total} communes — "
+          + ", ".join(d["code"] for d in index["departements"]))
 
     print("dossiers d'exemple…")
     exemples = []
@@ -105,8 +107,10 @@ def main():
     dossiers = "\n".join(exemples)
 
     adresse = "https://ronaldom9.github.io/immopilot/"
-    page = PAGE.replace("__MARCHE__", json.dumps(marche, ensure_ascii=False, separators=(",", ":")))
-    page = page.replace("__DOSSIERS__", dossiers)
+    page = PAGE.replace("__DOSSIERS__", dossiers)
+    page = page.replace("__NB_DEP__", str(len(index["departements"])))
+    page = page.replace("__NB_COMMUNES__", str(total))
+    page = page.replace("__DEPARTEMENTS__", ", ".join(d["code"] for d in index["departements"]))
     page = page.replace("__GENERE__", datetime.now(timezone.utc).strftime("%d/%m/%Y"))
     page = page.replace("__ADRESSE__", adresse)
 
@@ -124,7 +128,7 @@ PAGE = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="dark">
-<title>ImmoPilot — marché du Val-d'Oise et décision d'investissement</title>
+<title>ImmoPilot — marché d'Île-de-France et décision d'investissement</title>
 <style>
 :root{--bg:#08131f;--panel:#112335;--panel2:#172c40;--border:#294255;--text:#f3f7fa;--muted:#98afc0;
 --accent:#5de3c5;--warn:#ffcc7b;--red:#ff928e;--radius:16px;
@@ -176,7 +180,7 @@ a{color:var(--accent)}
   <div class="brand">
     <div class="logo">◆</div>
     <div>
-      <h1>ImmoPilot <small>— marché du Val-d'Oise</small></h1>
+      <h1>ImmoPilot <small>— marché d'Île-de-France</small></h1>
       <p>Moteur déterministe · les chiffres viennent des actes notariés, pas d'un modèle de langage</p>
     </div>
   </div>
@@ -208,12 +212,15 @@ __DOSSIERS__
 </div>
 
 <h2>Le marché, commune par commune</h2>
-<p class="lead">Prix <b>actualisés au niveau 2025</b> (le département a perdu 13 % de son prix au m²
-depuis 2022), médiane sur trois ans, ou sur cinq ans quand la commune est trop petite. Chaque ligne
-dit sur combien de ventes elle repose : une médiane sur deux ventes n'est pas un prix.</p>
+<p class="lead">__NB_DEP__ départements d'Île-de-France (__DEPARTEMENTS__), __NB_COMMUNES__ communes.
+Prix <b>actualisés au niveau 2025</b>, département par département — celui du Val-d'Oise a perdu
+13 % de son prix au m² depuis 2022, l'Île-de-France dans son ensemble moins. Médiane sur trois ans,
+ou sur cinq ans quand la commune est trop petite. Chaque ligne dit sur combien de ventes elle
+repose : une médiane sur deux ventes n'est pas un prix.</p>
 <div class="carte">
-  <div class="grid g3">
-    <div><label>Rechercher une commune</label><input id="q" placeholder="écouen, garges, sannois…"></div>
+  <div class="grid g4">
+    <div><label>Département</label><select id="dep"></select></div>
+    <div><label>Rechercher une commune</label><input id="q" placeholder="écouen, montreuil, paris…"></div>
     <div><label>Trier par</label><select id="tri">
       <option value="rendement">rendement brut</option>
       <option value="median_m2">prix au m² (croissant)</option>
@@ -271,7 +278,7 @@ dit sur combien de ventes elle repose : une médiane sur deux ventes n'est pas u
   </div>
   <div class="carte">
     <h3>Méthode et sources</h3>
-    <div class="kv"><span>Prix</span><span>DVF Etalab, 2021-2025, Val-d'Oise</span></div>
+    <div class="kv"><span>Prix</span><span>DVF Etalab, 2021-2025, Île-de-France</span></div>
     <div class="kv"><span>Loyers</span><span>carte des loyers, ministère du Logement</span></div>
     <div class="kv"><span>Actualisation</span><span>indice départemental, base 2025</span></div>
     <div class="kv"><span>Comparables</span><span>bande de surface à ± 35 %</span></div>
@@ -292,11 +299,20 @@ dit sur combien de ventes elle repose : une médiane sur deux ventes n'est pas u
 </div>
 
 <script>
-const M = __MARCHE__;
+let M = null;
 const n = x => (x===null||x===undefined||isNaN(x)) ? '—' : Math.round(x).toLocaleString('fr-FR');
 const e = x => n(x) + ' €';
 const p = (x,d=2) => (x===null||x===undefined||isNaN(x)) ? '—' : (+x).toFixed(d).replace('.',',') + ' %';
 const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function charge(dep){
+  const r = await fetch('data/marche_' + dep + '.json');
+  if(!r.ok) throw new Error(dep);
+  M = await r.json();
+  document.getElementById('titre').textContent = 'Chargement…';
+  document.getElementById('q').value = '';
+  liste();
+}
 
 function liste(){
   const q = document.getElementById('q').value.toLowerCase();
@@ -338,7 +354,21 @@ function voies(nom){
   document.getElementById('voies').scrollIntoView({behavior:'smooth', block:'nearest'});
 }
 ['q','tri','filtre'].forEach(id => document.getElementById(id).addEventListener('input', liste));
-liste();
+document.getElementById('dep').addEventListener('change', e => charge(e.target.value).catch(err => {
+  document.getElementById('titre').textContent = 'Département ' + err.message + ' indisponible';
+}));
+(async function(){
+  try{
+    const idx = await (await fetch('data/index.json')).json();
+    document.getElementById('dep').innerHTML = idx.departements.map(d =>
+      '<option value="'+d.code+'">département '+d.code+' — '+d.communes+' communes</option>').join('');
+    const prefere = idx.departements.some(d => d.code === '95') ? '95' : idx.departements[0].code;
+    document.getElementById('dep').value = prefere;
+    await charge(prefere);
+  }catch(e){
+    document.getElementById('titre').textContent = 'Données de marché indisponibles (réseau ?)';
+  }
+})();
 
 function rapide(){
   const prix = +document.getElementById('c-prix').value || 0;

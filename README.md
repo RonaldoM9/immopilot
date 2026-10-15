@@ -12,10 +12,15 @@ déterministe et testé. Une conversation peut mettre les chiffres en mots ; ell
 ## 1. Démarrage
 
 ```bash
-# le moteur, en ligne de commande
+# les données (elles ne sont pas dans le dépôt) : 95 seul, ou l'Île-de-France complète
 cd /root/projects/immopilot
+python3 scripts/telecharge_donnees.py
+python3 scripts/telecharge_donnees.py --departements 75,77,78,91,92,93,94,95
+
+# le moteur, en ligne de commande
 python3 -m moteur.bench                                   # banc d'essai : 26/26 attendu
 python3 -m moteur.dossier --commune Groslay --surface 30 --prix 110000 --loyer 637
+python3 -m moteur.dossier --commune "Paris 11e" --surface 35 --prix 350000 --loyer 1400
 python3 -m moteur.dossier --commune Écouen --type Maison --surface 100 --terrain 300 \
         --prix 330000 --loyer 1400 --md                   # le dossier en texte, prêt à coller
 
@@ -24,11 +29,12 @@ systemctl --user status immopilot.service
 systemctl --user restart immopilot.service                # après toute modification du moteur
 # → http://100.125.91.40:8770   (réseau tailnet uniquement, aucune exposition publique)
 
-# régénérer les données de marché servies à la webapp (10 s)
-python3 scripts/exporte_marche.py
+# régénérer les données de marché servies à la webapp et au site publié
+python3 scripts/exporte_marche.py                         # tous les départements chargés
+python3 scripts/generer_site_statique.py                  # docs/index.html (GitHub Pages)
 ```
 
-Réglages par variables d'environnement : `IMMOPILOT_HOST`, `IMMOPILOT_PORT`.
+Réglages par variables d'environnement : `IMMOPILOT_HOST`, `IMMOPILOT_PORT`, `IMMOPILOT_PREFIXE`.
 
 ---
 
@@ -43,7 +49,22 @@ Réglages par variables d'environnement : `IMMOPILOT_HOST`, `IMMOPILOT_PORT`.
 | `moteur/verdict.py` | les règles de décision, la confiance, les motifs de refus |
 | `moteur/dossier.py` | assemblage du dossier, CLI, rendu texte |
 
-Un dossier complet prend **150 ms**, interface comprise.
+Un dossier complet prend **150 ms**, interface comprise — hors premier chargement des données.
+
+## 2 bis. Le périmètre de données
+
+Un fichier DVF par département et par millésime : le moteur ne suppose plus le 95 en dur. Il
+travaille sur tous les départements présents dans `donnees/`, et chaque prix est actualisé avec
+**l'indice de son propre département** — le Val-d'Oise a perdu 13 % de son prix au m² depuis 2022,
+l'Île-de-France dans son ensemble moins. Chargés à ce jour : **75, 77, 78, 91, 92, 93, 94, 95**.
+
+Un nom de commune peut exister dans deux départements. `analyse.resout_commune` retient celle qui
+compte le plus de ventes et **signale l'homonymie** ; un code INSEE lève toute ambiguïté. Deux
+marchés ne sont jamais mélangés dans une même médiane.
+
+Pour étendre : `python3 scripts/telecharge_donnees.py --departements 27,60,76`, puis relancer
+l'export et la génération du site. Comptez 1,4 Mo compressé et 6 à 10 Mo décompressé par
+département et par millésime.
 
 ## 3. Méthode — ce qui a été appris le 15/10/2026
 

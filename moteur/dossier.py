@@ -61,21 +61,27 @@ def construire(d):
     commune, voie = d.get("commune"), d.get("voie")
     surface, prix = float(d["surface"]), float(d["prix_demande"])
 
+    # --- quelle commune exactement ? (un nom peut exister dans deux départements)
+    resolution = analyse.resout_commune(commune)
+    insee = resolution["insee"] if resolution else None
+    if resolution and resolution.get("commune"):
+        commune = resolution["commune"]
+
     # --- comparables : la rue d'abord, la commune ensuite, à surface comparable, en cascade
     if voie:
-        par_rue, desc_rue = analyse.comparables_avec_repli(commune=commune, voie=voie,
+        par_rue, desc_rue = analyse.comparables_avec_repli(commune=commune, insee=insee, voie=voie,
                                                            type_local=type_local, surface=surface)
     else:
         par_rue, desc_rue = [], ""
     s_rue = analyse.synthese(par_rue)
     par_commune, desc_commune = analyse.comparables_avec_repli(
-        commune=commune, type_local=type_local, surface=surface)
+        commune=commune, insee=insee, type_local=type_local, surface=surface)
     s_commune = analyse.synthese(par_commune)
     reference = s_rue if s_rue["n"] >= 5 else s_commune
     description_reference = desc_rue if s_rue["n"] >= 5 else desc_commune
 
     # --- valeur de marché du bien, par le modèle taille + terrain (calibré sur cinq ans)
-    modele = analyse.modele_valeur(commune=commune, type_local=type_local)
+    modele = analyse.modele_valeur(commune=commune, insee=insee, type_local=type_local)
     valeur = analyse.valeur_estimee(modele, surface, float(d.get("terrain") or 0)) if modele else None
 
     # Quand le périmètre comparable est trop mince, la référence par médiane n'a pas de sens

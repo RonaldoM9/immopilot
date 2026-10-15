@@ -23,6 +23,8 @@ python3 -m moteur.dossier --commune Groslay --surface 30 --prix 110000 --loyer 6
 python3 -m moteur.dossier --commune "Paris 11e" --surface 35 --prix 350000 --loyer 1400
 python3 -m moteur.dossier --commune Écouen --type Maison --surface 100 --terrain 300 \
         --prix 330000 --loyer 1400 --md                   # le dossier en texte, prêt à coller
+python3 -m moteur.candidats --budget-max 160000 --apport 130000 --rendement-min 6 \
+        --departements 93,95 --intention rendement --jev   # cherche les meilleures opérations
 
 # le cockpit (service systemd utilisateur, déjà actif)
 systemctl --user status immopilot.service
@@ -119,7 +121,44 @@ réponse, pas un échec.
 Les prix des cas « dans le marché » sont **calculés par le moteur lui-même**, pas codés en dur :
 le banc reste valide quand les données DVF sont mises à jour.
 
-## 6. Le cockpit — quatre onglets
+## 7. La recherche d'opérations — l'onglet « Chercher »
+
+Les critères en entrée (budget, apport, rendement exigé, surface, type, département, intention),
+les meilleures opérations en sortie, département par département. Trois temps :
+
+1. **Présélection arithmétique** sur les données de marché déjà produites : on écarte une commune
+   quand le lot typique dépasse le budget, quand le rendement passe sous le seuil, quand
+   l'échantillon est trop mince ou trop dispersé. 1 284 communes → quelques dizaines.
+2. **Évaluation complète** : chaque survivant passe par `moteur/dossier.py`, donc par exactement le
+   même chemin de code que l'onglet Décider — mêmes comparables, même fiscalité sur dix ans, même
+   contrôle de trésorerie, même verdict. Un candidat affiché ici et le même bien saisi à la main
+   donnent le même résultat, sinon la page serait un second moteur à maintenir.
+3. **Classement** selon l'intention déclarée (`rendement`, `securite`, `revente`), en tri.
+
+Quand rien ne s'autofinance, le moteur cherche par **dichotomie le prix d'équilibre** : le prix le
+plus haut auquel l'opération ne consomme plus de trésorerie. Un refus sans ce chiffre ne sert qu'à
+moitié — « non » n'aide personne, « non à ce prix, oui à celui-là » aide.
+
+### Le rôle exact de Jev
+
+Jev ne choisit pas « le meilleur investissement ». Il ne calcule rien, ne vérifie aucun fait et ne
+connaît que le texte qu'on lui donne. Il répond à **une seule question bornée** : *parmi ces
+opérations déjà chiffrées, laquelle correspond le mieux à l'intention déclarée ?* Sa réponse est une
+**clé** (`c1`, `c2`…) qui désigne une ligne précise du moteur — donc elle est vérifiable ligne à
+ligne. Aucun chiffre de sa réponse n'est recopié dans un résultat.
+
+Règles en dur dans `moteur/arbitrage.py` : l'état envoyé ne contient que des chiffres produits par
+le moteur ; la panne de Jev est un état normal, le classement du moteur s'affiche alors seul et le
+dit. Coût mesuré : 3 046 jetons d'entrée, **0,00013 $** et 244 ms par recherche (modèle jev-1.13.0).
+
+### Ce que la page publique peut, et ne peut pas, faire
+
+Le site publié exécute la même recherche **dans le navigateur**, sans serveur ni Jev : filtre et
+classement sur les données déjà chargées, plus une trésorerie **approximative** sur l'an 1. Le
+classement des régimes sur dix ans, le contrôle de trésorerie du foyer, le verdict et l'arbitrage
+Jev demandent le cockpit privé — un navigateur ne les fera pas.
+
+## 6. Le cockpit — cinq onglets
 
 - **Décider** — un bien, un prix demandé → verdict, comparables ouverts, fiscalité sur dix ans,
   mensualité, solde du foyer, et un bouton *Copier le dossier (markdown)*.
@@ -141,6 +180,8 @@ GET  /api/foyer         synthèse du foyer + capacité d'emprunt
 POST /api/patrimoine    enregistre le patrimoine
 POST /api/dossier       construit un dossier et rend le verdict
 POST /api/dossier.md    le même dossier, en texte
+POST /api/recherche     cherche les meilleures opérations du périmètre selon des critères
+                        (+ arbitrage Jev si `jev` n'est pas faux)
 ```
 
 ## 8. Limites — à lire avant de décider

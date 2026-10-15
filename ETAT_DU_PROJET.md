@@ -214,7 +214,7 @@ projects/immopilot/
 
 ## 6. Ajout du 14/10 au soir — estimation de la maison d'Écouen
 
-Ronald a demandé la valeur de sa maison, **13 rue Georges Clemenceau, 95440 Écouen**.
+Ronald a demandé la valeur de sa maison (Écouen, Val-d'Oise).
 Trois scripts et une note de valeur ont été ajoutés :
 
 - `livrables/estimation_maison_ecouen_14oct2026.md` — la note complète (rue, marché

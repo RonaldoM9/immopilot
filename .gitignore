@@ -15,3 +15,10 @@ livrables/Caddyfile*.bak
 __pycache__/
 *.pyc
 .DS_Store
+
+# Notes internes et analyses de la maison (non publiques)
+transcription_telegram_14oct2026.txt
+scripts/estimation_ecouen.py
+scripts/estimation_clemenceau.py
+scripts/grille_valeur_ecouen.py
+scripts/nettoie_avant_publication.py

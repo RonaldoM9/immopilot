@@ -20,17 +20,17 @@ else:
     from . import analyse, dossier as Dos, fiscalite as Fis, verdict as V
 
 # ---------------------------------------------------------------- profils de foyer
-P_AISE = {"revenus_mensuels": 7594, "budget_de_vie": 4500, "charges_recurrentes": 0,
+P_AISE = {"revenus_mensuels": 5000, "budget_de_vie": 3000, "charges_recurrentes": 0,
           "mensualites_existantes": 0, "epargne": 100000, "reserve": 20000, "tmi": 0.30}
-P_APPORT_TOTAL = {"revenus_mensuels": 7594, "budget_de_vie": 4500, "charges_recurrentes": 0,
+P_APPORT_TOTAL = {"revenus_mensuels": 5000, "budget_de_vie": 3000, "charges_recurrentes": 0,
                   "mensualites_existantes": 0, "epargne": 250000, "reserve": 50000, "tmi": 0.30}
-P_TRES_FORT = {"revenus_mensuels": 7594, "budget_de_vie": 4500, "charges_recurrentes": 0,
+P_TRES_FORT = {"revenus_mensuels": 5000, "budget_de_vie": 3000, "charges_recurrentes": 0,
                "mensualites_existantes": 0, "epargne": 450000, "reserve": 50000, "tmi": 0.30}
-P_TENDU = {"revenus_mensuels": 7594, "budget_de_vie": 10625, "charges_recurrentes": 0,
+P_TENDU = {"revenus_mensuels": 5000, "budget_de_vie": 7000, "charges_recurrentes": 0,
            "mensualites_existantes": 0, "epargne": 100000, "reserve": 20000, "tmi": 0.30}
 P_SANS_APPORT = {"revenus_mensuels": 6000, "budget_de_vie": 2000, "charges_recurrentes": 0,
                  "mensualites_existantes": 0, "epargne": 0, "reserve": 0, "tmi": 0.30}
-P_ENDUETTE = {"revenus_mensuels": 7594, "budget_de_vie": 4500, "charges_recurrentes": 0,
+P_ENDUETTE = {"revenus_mensuels": 5000, "budget_de_vie": 3000, "charges_recurrentes": 0,
               "mensualites_existantes": 3600, "epargne": 100000, "reserve": 20000, "tmi": 0.30}
 
 EXPL = {"charges_annuelles": 900, "taxe_fonciere": 750, "entretien_annuel": 400,

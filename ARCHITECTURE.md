@@ -240,5 +240,5 @@ Rien de tout cela n'est à refaire. C'est la différence entre concevoir et dém
 3. **La santé d'une copropriété est invisible** — et c'est précisément là que Jev sert,
    parce qu'il lit les documents qui, eux, en parlent.
 4. **La dispersion locale est énorme.** Dans la même rue, deux maisons comparables peuvent
-   s'échanger avec un facteur 1,7 (Écouen, rue Georges Clemenceau, 2021). Un outil qui rend
+   s'échanger avec un facteur 1,7 (Écouen, 2021 : deux maisons de la même rue). Un outil qui rend
    un chiffre unique sans intervalle ment, même quand son calcul est juste.

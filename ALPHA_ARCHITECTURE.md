@@ -109,7 +109,7 @@ dossiers/2026-10-15-sannois-t3.md     un dossier par bien etudie : verdict + don
 Vingt dossiers de référence, dont **cinq pièges** (une opération qui doit être refusée), et
 un test qui échoue si le moteur valide un piège. Point de départ, déjà à disposition :
 
-- la maison d'Écouen (13 rue Georges Clemenceau) : cohérence de la valeur ;
+- la maison d'Écouen : cohérence de la valeur ;
 - les communes du dossier du 14/10 : Garges, Villiers-le-Bel, Sannois, Groslay ;
 - Écouen, rue des comparables 2021 : 2 916 et 4 866 €/m² — le cas de dispersion forte ;
 - un bien dont le coût dépasse la capacité après contrôle de trésorerie → **NON** ;

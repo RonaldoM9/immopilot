@@ -28,7 +28,7 @@ def dossier_par_defaut():
         "commune": "Groslay", "voie": None, "type": "Appartement",
         "surface": 30.0, "terrain": 0.0, "prix_demande": 95000.0,
         "loyer_mensuel_ht": 424.0,
-        "profil": {"revenus_mensuels": 7594.0, "budget_de_vie": 8500.0,
+        "profil": {"revenus_mensuels": 5000.0, "budget_de_vie": 3000.0,
                    "charges_recurrentes": 0.0, "mensualites_existantes": 0.0,
                    "epargne": 100000.0, "reserve": 20000.0, "tmi": 0.30,
                    "poids_loyers": 0.70, "taux": 3.5, "annees": 20, "assurance_pct": 0.30},

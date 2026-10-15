@@ -22,8 +22,8 @@ BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DONNEES = os.path.join(BASE, "donnees")
 
 ANNEES = (2021, 2022, 2023, 2024, 2025)
-ANNEES_REFERENCE = (2023, 2024, 2025)  # fenêtre de référence : le marché a perdu 13 % depuis
-                                       # 2022, mélanger cinq ans gonfle la médiane de ~15 %
+ANNEES_REFERENCE = (2023, 2024, 2025)  # fenêtre de référence : trois ans, chaque prix
+                                       # actualisé au niveau 2025 de son département
 PART_SURFACE = 0.40               # au-delà, on répartit le prix au prorata des surfaces
 TOLERANCE_SURFACE = 0.35          # bande de comparables autour de la surface cible
 PRIX_MIN_M2, PRIX_MAX_M2 = 500, 25_000
@@ -157,10 +157,10 @@ _indice_cache = {}
 def indice_annuel(type_local="Appartement", annees=ANNEES, departements=None):
     """Indice départemental des prix au m², base 1.0 = la dernière année connue.
 
-    Sert à **actualiser les comparables anciens** : le marché du Val-d'Oise a perdu 13 % de son
-    prix au m² entre 2022 et 2025. Sans cette actualisation, élargir la fenêtre pour avoir plus
-    de ventes gonfle la médiane — c'est l'erreur qui a été mesurée le 15/10/2026 (Groslay
-    passait de 3 526 à 4 029 EUR/m² en passant d'un an à trois ans de données).
+    Sert à **actualiser les comparables anciens**. Sens et amplitude varient fortement d'un
+    département et d'un segment à l'autre — mesure du 15/10/2026 : sur les appartements de 15 à 45 m², la médiane départementale a **monté** de 4 à 10 % selon le département entre 2022 et 2025 (95 : +5,3 %) ; à Écouen, ce sont les maisons qui ont cédé 13 % sur la même période. Sans actualisation, élargir la fenêtre
+    pour gagner des ventes mélange des niveaux de prix différents : mesuré le 15/10/2026, la
+    médiane de Groslay passait de 3 526 à 4 029 EUR/m² en allant d'un an à trois ans.
     """
     deps = perimetre(departements)
     cle = (type_local, tuple(annees), deps)

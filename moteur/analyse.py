@@ -16,8 +16,9 @@ def comparables(commune=None, insee=None, voie=None, type_local="Appartement",
     1. comparer un prix demandé à une médiane calculée sur toutes les surfaces produit des
        écarts absurdes (une maison de 100 m² n'a pas le prix au m² d'un 40 m²) : la bande
        autour de la surface cible est obligatoire ;
-    2. mélanger cinq ans gonfle la médiane, le marché ayant perdu 13 % depuis 2022 : la
-       fenêtre de référence par défaut est donc (2024, 2025).
+    2. mélanger cinq ans sans actualiser mélange des niveaux de prix : les médianes
+       départementales ont bougé de -13 % à +10 % selon le segment et la commune entre 2022 et
+       2025 — d'où une fenêtre de trois ans **et** une actualisation par département.
     """
     annees = annees or D.ANNEES_REFERENCE
     lo, hi = (surf_min, surf_max) if surf_min and surf_max else (

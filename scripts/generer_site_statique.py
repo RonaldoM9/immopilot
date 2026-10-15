@@ -213,8 +213,9 @@ __DOSSIERS__
 
 <h2>Le marché, commune par commune</h2>
 <p class="lead">__NB_DEP__ départements d'Île-de-France (__DEPARTEMENTS__), __NB_COMMUNES__ communes.
-Prix <b>actualisés au niveau 2025</b>, département par département — celui du Val-d'Oise a perdu
-13 % de son prix au m² depuis 2022, l'Île-de-France dans son ensemble moins. Médiane sur trois ans,
+Prix <b>actualisés au niveau 2025</b>, département par département. Sur les appartements de 15 à
+45 m², la médiane départementale a monté de 4 à 10 % entre 2022 et 2025 (95 : +5,3 %, 92 : +9,8 %).
+Médiane sur trois ans,
 ou sur cinq ans quand la commune est trop petite. Chaque ligne dit sur combien de ventes elle
 repose : une médiane sur deux ventes n'est pas un prix.</p>
 <div class="carte">

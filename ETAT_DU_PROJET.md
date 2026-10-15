@@ -300,3 +300,40 @@ du 14/10 annonçait 320 000 à 335 000 euros.
 - Webapp de suivi de portefeuille (multi-biens, historique daté) : postérieure à l'alpha.
 - Fiscalité : mécanique indicative 2026, à faire valider par un expert-comptable
   (réforme LMNP 2025 sur les amortissements et la plus-value).
+
+---
+
+## PÉRIMÈTRE ÉTENDU À L'ÎLE-DE-FRANCE — 15 octobre 2026
+
+Question de Ronald : « pourquoi je ne vois que les villes du Val-d'Oise ? » Réponse : parce que le
+moteur n'avait chargé que le 95, département écrit en dur dans le nom du fichier de données. Corrigé.
+
+### Ce qui a changé
+
+- Le moteur ne suppose plus aucun département : il travaille sur tous ceux présents dans `donnees/`.
+  `D.departements_disponibles()`, `D.perimetre()`, `D.fixe_perimetre()`.
+- Huit départements chargés : 75, 77, 78, 91, 92, 93, 94, 95 — **1284 communes** au total.
+- département 75 : 20 communes, 2419 voies
+- département 77 : 507 communes, 5035 voies
+- département 78 : 258 communes, 3722 voies
+- département 91 : 194 communes, 3468 voies
+- département 92 : 36 communes, 2242 voies
+- département 93 : 40 communes, 2593 voies
+- département 94 : 47 communes, 2442 voies
+- département 95 : 182 communes, 2927 voies
+- `donnees/*.csv` pèse désormais 436 Mo (contre 52 Mo) ; l'espace disque reste à 73 %.
+- **Chaque prix est actualisé avec l'indice de son propre département** : le Val-d'Oise a perdu
+  de 4 à 10 % selon le département entre 2022 et 2025 (95 : +5,3 %). Un indice unique
+  aurait faussé les deux.
+- `analyse.resout_commune()` tranche les homonymies (deux communes du même nom dans deux
+  départements) et s'appuie sur un index construit une seule fois : sans lui, chaque dossier
+  reprenait une seconde à parcourir 223 000 ventes.
+- Les données de marché sont publiées **par département** (`marche_<dep>.json` + un `index.json`),
+  pour ne jamais embarquer tout le pays dans une page.
+- Le site publié et le cockpit ont un sélecteur de département.
+
+### Coût et méthode
+
+1,4 Mo compressé et 6 à 10 Mo décompressé par département et par millésime. Étendre à d'autres
+départements tient en une commande : `python3 scripts/telecharge_donnees.py --departements 27,60,76`,
+puis `scripts/exporte_marche.py` et `scripts/generer_site_statique.py`.

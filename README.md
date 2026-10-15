@@ -55,8 +55,10 @@ Un dossier complet prend **150 ms**, interface comprise — hors premier chargem
 
 Un fichier DVF par département et par millésime : le moteur ne suppose plus le 95 en dur. Il
 travaille sur tous les départements présents dans `donnees/`, et chaque prix est actualisé avec
-**l'indice de son propre département** — le Val-d'Oise a perdu 13 % de son prix au m² depuis 2022,
-l'Île-de-France dans son ensemble moins. Chargés à ce jour : **75, 77, 78, 91, 92, 93, 94, 95**.
+**l'indice de son propre département**. Sens et amplitude varient : sur les appartements de 15
+à 45 m², la médiane a **monté** de 4 à 10 % entre 2022 et 2025 selon le département (95 : +5,3 %,
+92 : +9,8 %), tandis qu'à Écouen les maisons cédaient 13 % sur la même période. Chargés à ce jour :
+**75, 77, 78, 91, 92, 93, 94, 95**.
 
 Un nom de commune peut exister dans deux départements. `analyse.resout_commune` retient celle qui
 compte le plus de ventes et **signale l'homonymie** ; un code INSEE lève toute ambiguïté. Deux
@@ -70,10 +72,11 @@ département et par millésime.
 
 Ces quatre points ne sont pas des détails : chacun a été mesuré, chiffré, puis corrigé.
 
-1. **Actualiser les prix anciens.** Le 95 a perdu 13 % de son prix au m² entre 2022 et 2025.
-   Mélanger cinq ans gonfle la médiane (Groslay passait de 3 526 à 4 029 €/m²). Les comparables
-   sont donc ramenés au niveau 2025 par un indice départemental, et la fenêtre de référence
-   est de trois ans.
+1. **Actualiser les prix anciens.** La médiane appartements a monté de 4 à 10 % selon le
+   département entre 2022 et 2025, les maisons d'Écouen ont cédé 13 % : les segments ne bougent
+   pas ensemble. Mélanger cinq ans sans actualiser gonfle la médiane (Groslay passait de 3 526 à
+   4 029 €/m² en allant d'un an à trois ans). Chaque comparable est donc ramené au niveau 2025 de
+   son département, et la fenêtre de référence est de trois ans.
 2. **Une bande de surface stricte, jamais élargie.** À Écouen, élargir autour d'une maison de
    100 m² fait entrer des maisons de 40 m² dont le prix au m² vaut le double : la médiane
    annonçait 4 320 €/m² au lieu de 3 285. Quand le périmètre est trop mince, on élargit le

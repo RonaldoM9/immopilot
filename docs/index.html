@@ -91,7 +91,7 @@ ouverts, valeur, loyer, financement, fiscalité, trésorerie, verdict et motifs.
       <p class="sous">Un rendement correct, payé sans crédit : les trois feux sont verts.</p>
       <details><summary>Voir le dossier complet produit par le moteur</summary>
         <pre>DOSSIER — Groslay
-2026-10-15T14:24 · moteur 0.1.0 · Appartement de 30 m² à 116 479 € (3 883 €/m²)
+2026-10-15T15:43 · moteur 0.1.0 · Appartement de 30 m² à 116 479 € (3 883 €/m²)
 
 VERDICT : ACHETER   (confiance 60 %)
 
@@ -144,7 +144,7 @@ FISCALITÉ — trois régimes, dix ans
 (Mecanique indicative 2026. Plafonds et conditions a valider par un expert-comptable. La reforme 2025 du LMNP reintroduit les amortissements dans le calcul de la plus-value a la revente.)
 
 ---
-Contrôle de vraisemblance départemental : 3 879 €/m² sur 1 683 ventes — plausible.
+Contrôle de vraisemblance départemental : 6 750 €/m² sur 35 954 ventes — plausible.
 Chiffres produits par le moteur déterministe ; aucun calcul n&#x27;est fait par un modèle de langage.</pre></details>
     </div>
 <div class="carte">
@@ -154,7 +154,7 @@ Chiffres produits par le moteur déterministe ; aucun calcul n&#x27;est fait par
       <p class="sous">Ni refus, ni blanc-seing : le moteur chiffre le prix auquel il faudrait négocier.</p>
       <details><summary>Voir le dossier complet produit par le moteur</summary>
         <pre>DOSSIER — Sannois
-2026-10-15T14:24 · moteur 0.1.0 · Appartement de 30 m² à 137 368 € (4 579 €/m²)
+2026-10-15T15:43 · moteur 0.1.0 · Appartement de 30 m² à 137 368 € (4 579 €/m²)
 
 VERDICT : NÉGOCIER   (confiance 73 %)
 
@@ -213,7 +213,7 @@ FISCALITÉ — trois régimes, dix ans
 (Mecanique indicative 2026. Plafonds et conditions a valider par un expert-comptable. La reforme 2025 du LMNP reintroduit les amortissements dans le calcul de la plus-value a la revente.)
 
 ---
-Contrôle de vraisemblance départemental : 3 879 €/m² sur 1 683 ventes — plausible.
+Contrôle de vraisemblance départemental : 6 750 €/m² sur 35 954 ventes — plausible.
 Chiffres produits par le moteur déterministe ; aucun calcul n&#x27;est fait par un modèle de langage.</pre></details>
     </div>
 <div class="carte">
@@ -223,7 +223,7 @@ Chiffres produits par le moteur déterministe ; aucun calcul n&#x27;est fait par
       <p class="sous">Le piège du prix : c&#x27;est exactement pour ce cas qu&#x27;un outil doit savoir dire non.</p>
       <details><summary>Voir le dossier complet produit par le moteur</summary>
         <pre>DOSSIER — Montmorency
-2026-10-15T14:24 · moteur 0.1.0 · Appartement de 30 m² à 164 324 € (5 477 €/m²)
+2026-10-15T15:43 · moteur 0.1.0 · Appartement de 30 m² à 164 324 € (5 477 €/m²)
 
 VERDICT : NON   (confiance 72 %)
 
@@ -282,7 +282,7 @@ FISCALITÉ — trois régimes, dix ans
 (Mecanique indicative 2026. Plafonds et conditions a valider par un expert-comptable. La reforme 2025 du LMNP reintroduit les amortissements dans le calcul de la plus-value a la revente.)
 
 ---
-Contrôle de vraisemblance départemental : 3 879 €/m² sur 1 683 ventes — plausible.
+Contrôle de vraisemblance départemental : 6 750 €/m² sur 35 954 ventes — plausible.
 Chiffres produits par le moteur déterministe ; aucun calcul n&#x27;est fait par un modèle de langage.</pre></details>
     </div>
 </div>
@@ -319,6 +319,31 @@ repose : une médiane sur deux ventes n'est pas un prix.</p>
   <p class="sm muted">Le prix se joue rue par rue : dans une même commune, l'écart entre deux voies
   dépasse souvent 40 %.</p>
 </div>
+
+<h2>Chercher la meilleure opération</h2>
+<p class="lead">Les mêmes données que ci-dessus, filtrées par ce que tu peux et ce que tu veux :
+budget, rendement exigé, surface. <b>Aucun modèle de langage n'intervient ici</b> — que de
+l'arithmétique sur les actes notariés. La version complète (fiscalité sur dix ans, contrôle de
+trésorerie, verdict et arbitrage Jev) tourne dans le cockpit privé, sur exactement les mêmes
+chiffres.</p>
+<div class="carte">
+  <div class="grid g4">
+    <div><label>Budget d'achat max (€)</label><input id="s-budget" type="number" value="160000" step="5000"></div>
+    <div><label>Apport (€)</label><input id="s-apport" type="number" value="40000" step="5000"></div>
+    <div><label>Rendement brut mini (%)</label><input id="s-rendement" type="number" value="6" step="0.5"></div>
+    <div><label>Surface de — à (m²)</label><div style="display:flex;gap:8px">
+      <input id="s-smin" type="number" value="20" step="1">
+      <input id="s-smax" type="number" value="45" step="1"></div></div>
+    <div><label>Type</label><select id="s-type"><option value="appart">appartement</option>
+      <option value="maison">maison</option></select></div>
+    <div><label>Intention</label><select id="s-intention">
+      <option value="rendement">rendement</option><option value="securite">sécurité</option>
+      <option value="revente">revente</option></select></div>
+    <div><label>Taux du crédit (%)</label><input id="s-taux" type="number" value="3.5" step="0.05"></div>
+    <div><label>Durée (années)</label><input id="s-duree" type="number" value="20" step="1"></div>
+  </div>
+</div>
+<div id="s-resultat"></div>
 
 <h2>Calcul rapide</h2>
 <p class="lead">Arithmétique de crédit et de rendement, faite dans la page. C'est une calculatrice,
@@ -389,6 +414,7 @@ async function charge(dep){
   document.getElementById('titre').textContent = 'Chargement…';
   document.getElementById('q').value = '';
   liste();
+  cherche();
 }
 
 function liste(){
@@ -446,6 +472,80 @@ document.getElementById('dep').addEventListener('change', e => charge(e.target.v
     document.getElementById('titre').textContent = 'Données de marché indisponibles (réseau ?)';
   }
 })();
+
+/* ---- recherche locale : filtre et tri sur les données déjà dans la page.
+       Aucun appel réseau, aucun modèle de langage : de l'arithmétique, et rien d'autre. ---- */
+function cherche(){
+  if(!M) return;
+  const type = document.getElementById('s-type').value === 'maison' ? 'maison' : 'appart';
+  const budget = +document.getElementById('s-budget').value || 0;
+  const apport = +document.getElementById('s-apport').value || 0;
+  const rmin = +document.getElementById('s-rendement').value || 0;
+  const smin = +document.getElementById('s-smin').value || 0;
+  const smax = +document.getElementById('s-smax').value || 999;
+  const taux = (+document.getElementById('s-taux').value || 0) / 100;
+  const annees = +document.getElementById('s-duree').value || 20;
+  const intention = document.getElementById('s-intention').value;
+
+  const out = [];
+  for (const c of M.communes){
+    const a = c[type];
+    if (!a || !a.median_m2 || !c.loyer || !c.loyer.loyer_m2) continue;
+    if ((a.n || 0) < 5) continue;
+    let surface = Math.min(Math.max(a.median_surface || smin, smin), smax);
+    if (surface * a.median_m2 > budget) surface = smin;
+    if (surface * a.median_m2 > budget) continue;
+    const prix = surface * a.median_m2;
+    const loyerM = c.loyer.loyer_m2 * surface * 0.95;
+    const rendement = loyerM * 12 / prix * 100;
+    if (rendement < rmin) continue;
+    const capital = Math.max(0, prix * 1.075 - apport);
+    const i = taux / 12, mois = annees * 12;
+    const mensualite = capital ? capital * (i ? i / (1 - Math.pow(1 + i, -mois)) : 1 / mois) : 0;
+    const charges = 14 * surface + prix * 0.0075 + prix * 0.004;
+    const loyersAn = loyerM * 12 * 0.95 * 0.98;
+    const cash = loyersAn - charges - mensualite * 12
+               - loyersAn * (type === 'appart' ? 0.5 : 0.7) * 0.472;
+    out.push({nom:c.nom, surface:surface, prix:prix, rendement:rendement, cash:cash,
+              n:a.n, dispersion:a.dispersion, median_m2:a.median_m2, loyer:c.loyer.loyer_m2});
+  }
+  out.sort((x,y) => intention === 'securite' ? (y.n - x.n) || (x.dispersion - y.dispersion)
+                  : intention === 'revente'   ? (y.n - x.n) || (y.rendement - x.rendement)
+                  : (y.cash - x.cash) || (y.rendement - x.rendement));
+  const l = out.slice(0, 12);
+  const t = document.getElementById('s-resultat');
+  if (!l.length){
+    t.innerHTML = '<div class="carte"><p class="muted" style="margin:0">Aucune commune du '
+      + 'département ' + esc(M.departement) + ' ne passe ces critères. Desserre le rendement exigé, '
+      + 'élargis la surface ou augmente le budget — ou change de département ci-dessus.</p></div>';
+    return;
+  }
+  t.innerHTML = '<div class="carte"><h3>' + out.length + ' opération(s) passent ces critères'
+    + ' — les 12 premières</h3><div class="scroll"><table><thead><tr><th>Commune</th>'
+    + '<th class="num">Lot</th><th class="num">Prix</th><th class="num">Médiane €/m²</th>'
+    + '<th class="num">Loyer €/m²</th><th class="num">Rendement brut</th>'
+    + '<th class="num">Trésorerie an 1 (approx.)</th><th class="num">Ventes</th>'
+    + '<th class="num">Dispersion</th></tr></thead><tbody>'
+    + l.map(x => '<tr><td>' + esc(x.nom) + '</td>'
+        + '<td class="num">' + n(x.surface) + ' m²</td>'
+        + '<td class="num">' + e(x.prix) + '</td>'
+        + '<td class="num">' + n(x.median_m2) + '</td>'
+        + '<td class="num">' + p(x.loyer, 2) + '</td>'
+        + '<td class="num" style="color:' + (x.rendement >= 9 ? 'var(--accent)' : 'inherit') + '">'
+          + p(x.rendement, 2) + '</td>'
+        + '<td class="num" style="color:' + (x.cash < 0 ? 'var(--red)' : 'var(--accent)') + '">'
+          + e(x.cash) + '</td>'
+        + '<td class="num">' + x.n + '</td>'
+        + '<td class="num">' + p(x.dispersion, 0) + '</td></tr>').join('')
+    + '</tbody></table></div>'
+    + '<p class="muted" style="margin:14px 0 0">La dernière colonne est une <b>approximation de '
+    + 'trésorerie</b> : abattement forfaitaire (50 % meublé, 30 % nu), prélèvements 17,2 % et '
+    + 'tranche marginale 30 %, sur l\'an 1. Le moteur complet classe les régimes sur dix ans, '
+    + 'vérifie la trésorerie du foyer, rend un verdict — et sait refuser. Cet arbitrage-là ne se '
+    + 'fait pas dans un navigateur.</p></div>';
+}
+document.querySelectorAll('#s-budget,#s-apport,#s-rendement,#s-smin,#s-smax,#s-type,#s-intention,#s-taux,#s-duree')
+  .forEach(x => x.addEventListener('input', cherche));
 
 function rapide(){
   const prix = +document.getElementById('c-prix').value || 0;

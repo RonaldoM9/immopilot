@@ -29,6 +29,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 RACINE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, RACINE)
 
+from moteur import analyse as Ana, arbitrage as Arb, candidats as Cand  # noqa: E402
 from moteur import dossier as Dos, donnees as D, financement as F  # noqa: E402
 
 WEBAPP = os.path.join(RACINE, "webapp")
@@ -175,6 +176,18 @@ class Handler(BaseHTTPRequestHandler):
                     return self._envoie(Dos.en_markdown(dos),
                                         type_="text/plain; charset=utf-8")
                 return self._envoie(dos)
+            if route == "/api/recherche":
+                criteres = corps.get("criteres") if isinstance(corps, dict) else None
+                criteres = criteres or (corps if isinstance(corps, dict) else {})
+                t0 = time.time()
+                resultat = Cand.cherche(criteres)
+                resultat["duree_ms"] = int((time.time() - t0) * 1000)
+                arbitrage = None
+                if criteres.get("jev", True):
+                    arbitrage = Arb.arbitre(resultat)
+                resultat["arbitrage"] = arbitrage
+                resultat["arbitrage_texte"] = Arb.rendu_texte(arbitrage) if arbitrage else None
+                return self._envoie(resultat)
             return self._envoie({"erreur": "route inconnue"}, 404)
         except Exception as e:                                  # noqa: BLE001
             traceback.print_exc()
@@ -219,6 +232,14 @@ def main():
     state = D.precharge()
     print(f"  {state['ventes_appart']:,} ventes d'appartements et {state['ventes_maison']:,} "
           f"de maisons chargées en {time.time() - t0:.0f} s")
+    # pré-chauffe des caches de la recherche : sans cela, la première recherche payait ~10 s de
+    # construction des listes actualisées sur cinq ans avant de produire son premier verdict.
+    t1 = time.time()
+    Ana.index_communes()
+    for type_local in ("Appartement", "Maison"):
+        D.ventes_actualisees(D.ANNEES, type_local)
+    Cand.blocs_marché()
+    print(f"  recherche pré-chauffée en {time.time() - t1:.0f} s")
     if not os.path.exists(os.path.join(DATA, "marche.json")):
         print("  ATTENTION : webapp/data/marche.json absent — lance scripts/exporte_marche.py")
     if not os.path.exists(PATRIMOINE):

@@ -63,7 +63,8 @@ def decider(comparables, prix_demande, fiscalite, tresorerie, surface, loyer=Non
     if comparables["n"] < 5:
         raisons.append(f"Comparables insuffisants : {comparables['n']} vente(s) retenue(s), "
                        f"5 exigées ({comparables['raison']}).")
-        return {"verdict": INDETERMINE, "confiance": round(c, 2), "raisons": raisons,
+        return {"verdict": INDETERMINE, "libelle": AFFICHAGE.get(INDETERMINE, INDETERMINE),
+                "confiance": round(c, 2), "raisons": raisons,
                 "blocages": [], "reserves": [],
                 "prix_marche_m2": ref or None,
                 "prix_marche_bien": prix_marche_bien or None,
@@ -109,26 +110,24 @@ def decider(comparables, prix_demande, fiscalite, tresorerie, surface, loyer=Non
             raisons.append(f"Rendement brut {rb:.2f} % (loyer de référence communal, "
                            f"{loyer['observations']} observations).")
 
-    # 6. la confiance est-elle suffisante pour publier un verdict ?
+    # 6. réserve de qualité de la donnée : une dispersion large se dit, elle ne décide pas
     if comparables["dispersion"] > 45:
         reserves.append(f"Écart interquartile de {comparables['dispersion']:.0f} % dans le "
                         f"périmètre : deux biens comparables peuvent s'échanger très différemment.")
-    if c < CONFIANCE_MIN:
-        raisons.extend(reserves)
-        raisons.append(f"Confiance {c:.2f} sous le seuil de {CONFIANCE_MIN} : "
-                       f"le dossier ne permet pas de trancher.")
-        return {"verdict": INDETERMINE, "confiance": round(c, 2), "raisons": raisons,
-                "blocages": blocages, "reserves": reserves,
-                "prix_marche_m2": ref, "prix_marche_bien": prix_marche_bien,
-                "prix_cible": prix_cible, "ecart_prix_pct": ecart,
-                "cash_flow_apres_impot": cf_retenu,
-                "detail": {"comparables": comparables, "tresorerie": tresorerie,
-                           "fiscalite": fiscalite}}
 
-    # 7. conclusion
+    # 7. conclusion — un refus ne demande aucune confiance, une approbation si.
+    #    Un blocage est un fait (cash-flow négatif, trésorerie impossible, prix hors marché) : il
+    #    tranche à lui seul. Réduire ce blocage à un « indéterminé » par manque de confiance
+    #    reviendrait à ne plus savoir dire NON, ce qui est exactement le travers que l'outil
+    #    corrige.
     if blocages:
         verdict = NON
         raisons.extend(blocages)
+    elif c < CONFIANCE_MIN:
+        raisons.extend(reserves)
+        raisons.append(f"Confiance {c:.2f} sous le seuil de {CONFIANCE_MIN} : "
+                       f"le dossier ne permet pas de trancher.")
+        verdict = INDETERMINE
     elif reserves:
         verdict = NEGOCIER
         raisons.extend(reserves)

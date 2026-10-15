@@ -110,6 +110,7 @@ code{background:#0c1d2b;padding:1px 6px;border-radius:6px;font-size:12px}
 <div class="nav">
   <button class="active" data-page="decider">Décider</button>
   <button data-page="marche">Mon marché</button>
+  <button data-page="chercher">Chercher</button>
   <button data-page="foyer">Mon foyer</button>
   <button data-page="methode">Méthode &amp; limites</button>
 </div>
@@ -180,6 +181,48 @@ code{background:#0c1d2b;padding:1px 6px;border-radius:6px;font-size:12px}
 </div>
 
 <!-- ==================================================== FOYER -->
+<div class="page" id="page-chercher">
+  <div class="hero">
+    <h2>Que puis-je acheter, et où ?</h2>
+    <p>Le moteur filtre les communes du périmètre, monte un dossier complet sur chaque opération
+    plausible, écarte ce qui ne s'autofinance pas, puis classe selon ton intention. Jev
+    n'intervient qu'à la fin — parmi des opérations <b>déjà chiffrées</b>, laquelle correspond le
+    mieux à ce que tu veux faire. Il ne calcule rien : chaque chiffre affiché vient du moteur.</p>
+  </div>
+
+  <div class="card">
+    <h3>Ce que tu veux</h3>
+    <div class="formgrid c3">
+      <div class="field"><label>Budget d'achat maximum (€)</label><input id="r-budget" type="number" step="5000"></div>
+      <div class="field"><label>Apport mobilisable (€)</label><input id="r-apport" type="number" step="5000"></div>
+      <div class="field"><label>Réserve de sécurité (€)</label><input id="r-reserve" type="number" step="5000"></div>
+      <div class="field"><label>Rendement brut minimum (%)</label><input id="r-rendement" type="number" step="0.5" value="6"></div>
+      <div class="field"><label>Type</label><select id="r-type">
+        <option>Appartement</option><option>Maison</option></select></div>
+      <div class="field"><label>Surface (m², de — à)</label>
+        <div style="display:flex;gap:8px"><input id="r-smin" type="number" step="1" placeholder="20">
+        <input id="r-smax" type="number" step="1" placeholder="45"></div></div>
+      <div class="field"><label>Départements</label><select id="r-deps">
+        <option value="">tout le périmètre</option></select></div>
+      <div class="field"><label>Intention</label><select id="r-intention">
+        <option value="rendement">rendement — tirer le revenu</option>
+        <option value="securite">sécurité — marché solide</option>
+        <option value="revente">revente — sortir facilement</option></select></div>
+      <div class="field"><label>Taux du crédit (%)</label><input id="r-taux" type="number" step="0.05" value="3.5"></div>
+      <div class="field"><label>Revenus du foyer (€/mois)</label><input id="r-revenus" type="number" step="100"></div>
+      <div class="field"><label>Budget de vie (€/mois)</label><input id="r-vie" type="number" step="100"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:16px;margin-top:16px;flex-wrap:wrap">
+      <button class="btn" id="r-go">Chercher les meilleures opérations</button>
+      <label class="muted" style="display:flex;align-items:center;gap:6px">
+        <input type="checkbox" id="r-jev" checked> arbitrage Jev</label>
+      <span class="muted" id="r-etat"></span>
+    </div>
+  </div>
+
+  <div id="r-sortie"></div>
+</div>
+
 <div class="page" id="page-foyer">
   <div class="hero">
     <h2>Mon foyer — et la seule ligne qui compte</h2>
@@ -577,6 +620,134 @@ $('#btn-save-patrimoine').onclick = async () => {
   }catch(e){ toast('échec : '+e.message); }
 };
 
+/* ------------------------------------------------------------------ CHERCHER */
+function lireCriteresRecherche(){
+  return {
+    budget_max: +$('#r-budget').value || 150000,
+    apport: +$('#r-apport').value || 0,
+    reserve: +$('#r-reserve').value || 0,
+    rendement_min: +$('#r-rendement').value || 5,
+    type: $('#r-type').value,
+    surface_min: +$('#r-smin').value || 20,
+    surface_max: +$('#r-smax').value || 45,
+    departements: $('#r-deps').value || null,
+    intention: $('#r-intention').value,
+    taux: +$('#r-taux').value || 3.5,
+    revenus_mensuels: +$('#r-revenus').value || 0,
+    budget_de_vie: +$('#r-vie').value || 0,
+    tmi: +($('#p-tmi').value || 0.30),
+    jev: $('#r-jev').checked
+  };
+}
+
+async function lancerRecherche(){
+  $('#r-go').disabled = true;
+  $('#r-sortie').innerHTML = '';
+  $('#r-etat').textContent = 'évaluation en cours — quelques dizaines de secondes…';
+  try{
+    const r = await api('/api/recherche', lireCriteresRecherche());
+    rendreRecherche(r);
+    $('#r-etat').textContent = `${r.nb_preselectionnes} communes présélectionnées · `
+      + `${r.nb_evalues} évaluées en entier · ${(r.duree_ms/1000).toFixed(1)} s`;
+  }catch(e){
+    $('#r-etat').textContent = 'échec : ' + e.message;
+  }finally{ $('#r-go').disabled = false; }
+}
+
+function etoile(x){
+  const t = x.verdict === 'ACHETER' ? 'ok' : (x.verdict === 'NEGOCIER' ? 'mid' : 'ko');
+  return `<span class="tag ${t}">${esc(x.libelle || x.verdict || '—')} · `
+       + `${Math.round((x.confiance||0)*100)} %</span>`;
+}
+
+function carteCandidat(x, entete){
+  return `<div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+      <h3 style="margin:0">${entete || ''}${esc(x.commune)} <span class="muted">dép. ${esc(x.departement)}</span></h3>
+      ${etoile(x)}</div>
+    <div class="kv"><span>Bien</span><span>${x.surface} m² — ${euro(x.prix_demande)}</span></div>
+    <div class="kv"><span>Marché de la commune</span><span>${x.prix_marche_m2?euro(x.prix_marche_m2)+'/m²':'—'} ${x.ecart_marche_pct!=null?'('+pct(x.ecart_marche_pct,1)+' vs médiane)':''}</span></div>
+    <div class="kv"><span>Loyer de référence retenu</span><span>${euro(x.loyer_mensuel_ht)}/mois</span></div>
+    <div class="kv"><span>Rendement brut</span><span>${pct(x.rendement_brut_pct,2)}</span></div>
+    <div class="kv"><span>Cash-flow après impôt (moyenne 10 ans)</span><span>${euro(x.cash_flow_moyen_10_ans)}/an <span class="muted">${esc(x.regime_retenu||'')}</span></span></div>
+    <div class="kv"><span>Crédit</span><span>${euro(x.mensualite)}/mois sur ${euro(x.capital_emprunte)}</span></div>
+    <div class="kv"><span>Solde du foyer après crédit</span><span>${euro(x.solde_apres_credit)}/mois</span></div>
+    <div class="kv"><span>Comparables retenus</span><span>${x.comparables_n ?? x.ventes ?? '—'} ventes · dispersion ${pct(x.dispersion ?? x.dispersion_pct,0)}</span></div>
+    <div style="margin-top:12px"><button class="btn ghost small" data-decider="${esc(x.commune)}"
+      data-surface="${x.surface}" data-prix="${x.prix_demande}" data-loyer="${x.loyer_mensuel_ht}"
+      data-type="${esc($('#r-type').value)}">ouvrir dans Décider</button></div>
+  </div>`;
+}
+
+function rendreRecherche(r){
+  const out = [], c = r.criteres, a = r.arbitrage;
+  if (a && a.ok){
+    const x = a.candidat;
+    out.push(`<div class="card soft" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline">
+        <h3 style="margin:0">Arbitrage Jev</h3>
+        <span class="muted">${esc(a.modele||'')} · ${a.latence_ms} ms · ${a.cout_usd} $</span></div>
+      <p style="margin:8px 0"><b>${esc(x.commune)} (${esc(x.departement)})</b> — ${x.surface} m² à
+      ${euro(x.prix_demande)}, rendement brut ${pct(x.rendement_brut_pct,2)}, cash-flow
+      ${euro(x.cash_flow_moyen_10_ans)}/an.</p>
+      <p class="muted" style="margin:0">Jev ne recalcule rien : il compare les lignes ci-dessous,
+      produites par le moteur, à ton intention déclarée (${esc(c.intention)}). Sa réponse désigne
+      une ligne précise, donc elle est vérifiable. Résistance de la liste à une baisse des loyers :
+      <b>${esc(a.robustesse_libelle || a.robustesse || '—')}</b>. Incohérence détectée dans la liste :
+      <b>${esc(a.drapeau_libelle || ((a.drapeau||0) > 0.6 ? 'oui' : 'non'))}</b>
+      <span class="muted">(${a.drapeau ?? 'n.d.'})</span>.</p></div>`);
+  } else if (a){
+    out.push(`<div class="card soft" style="margin-bottom:16px"><h3>Arbitrage Jev</h3>
+      <p class="muted" style="margin:0">Indisponible — ${esc(a.erreur || 'raison inconnue')}. Le
+      classement ci-dessous reste celui du moteur, qui ne dépend d'aucun modèle.</p></div>`);
+  }
+
+  if (r.candidats.length){
+    for (const dep of r.departements){
+      out.push(`<h3 style="margin:22px 0 10px">Département ${esc(dep)}</h3>`);
+      for (const x of r.par_departement[dep]) out.push(carteCandidat(x));
+    }
+  }
+
+  if (r.pistes && r.pistes.length){
+    out.push(`<div class="card" style="margin-top:22px"><h3>Rien ne s'autofinance à ces prix —
+      à quel prix ça tiendrait</h3>
+      <p class="muted" style="margin:0 0 14px">Le moteur a cherché par dichotomie le prix le plus
+      haut auquel l'opération ne consomme plus de trésorerie. C'est un chiffre calculé, pas une
+      invitation à négocier n'importe quoi : au-delà de 25 % de baisse, c'est un autre bien.</p>`);
+    for (const x of r.pistes){
+      out.push(`<div class="kv"><span>${esc(x.commune)} (${esc(x.departement)}) ${x.surface} m²
+        <span class="muted">— cash-flow actuel ${euro(x.cash_flow_moyen_10_ans)}/an</span></span>
+        <span>${euro(x.prix_actuel)} affiché → <b>${euro(x.prix_equilibre)}</b>
+        (baisse de ${x.baisse_requise_pct.toFixed(1)} %, soit ${pct(x.marge_marche_pct,1)} vs la médiane communale)</span></div>`);
+    }
+    out.push('</div>');
+  } else if (!r.candidats.length){
+    out.push(`<div class="card"><h3>Aucune opération ne passe</h3>
+      <p class="muted" style="margin:0">${r.nb_preselectionnes} communes ont passé le filtre
+      grossier, ${r.nb_evalues} ont été évaluées en entier : aucune ne s'autofinance après impôt, et
+      aucune ne tiendrait même à 35 % sous son prix. C'est une réponse, pas une panne. Desserre un
+      critère — rendement exigé, surface, apport — et relance.</p></div>`);
+  }
+
+  const rejets = Object.entries(r.rejets_preselection || {}).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const non = (r.refuses || []).length, ind = (r.indetermines || []).length;
+  out.push(`<div class="card soft" style="margin-top:18px"><h3>Ce qui a été écarté, et pourquoi</h3>
+    <div class="kv"><span>Écartées avant évaluation</span><span>${rejets.map(([k,v])=>`${v}× ${esc(k)}`).join(' · ') || '—'}</span></div>
+    <div class="kv"><span>Évaluées puis refusées (NON)</span><span>${non} ${non?'— la première raison est citée dans le détail du dossier':''}</span></div>
+    <div class="kv"><span>Données trop minces pour trancher</span><span>${ind}</span></div></div>`);
+
+  $('#r-sortie').innerHTML = out.join('');
+  document.querySelectorAll('#r-sortie [data-decider]').forEach(b => b.onclick = () => {
+    $('#f-commune').value = b.dataset.decider;
+    if (b.dataset.surface) $('#f-surface').value = b.dataset.surface;
+    if (b.dataset.prix) $('#f-prix').value = b.dataset.prix;
+    if (b.dataset.loyer) $('#f-loyer').value = b.dataset.loyer;
+    if (b.dataset.type) $('#f-type').value = b.dataset.type;
+    majVoies(); tab('decider');
+  });
+}
+
 /* ------------------------------------------------------------------ DEMARRAGE */
 function tab(nom){
   document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active', x.dataset.page===nom));
@@ -594,6 +765,9 @@ function tab(nom){
     const INDEX = await api('/api/marche');
     $('#f-dep').innerHTML = INDEX.departements.map(d =>
       `<option value="${d.code}">département ${d.code} — ${d.communes} communes</option>`).join('');
+    $('#r-deps').innerHTML = '<option value="">tout le périmètre</option>'
+      + INDEX.departements.map(d =>
+      `<option value="${d.code}">département ${d.code} — ${d.communes} communes</option>`).join('');
     if ([...$('#f-dep').options].some(o => o.value === '95')) $('#f-dep').value = '95';
     await chargeDepartement($('#f-dep').value);
   }catch(e){ $('#m-marche').textContent = 'données absentes : lancer scripts/exporte_marche.py'; }
@@ -601,6 +775,20 @@ function tab(nom){
   ['#f-commune'].forEach(s=>$(s).addEventListener('change',majVoies));
   $('#f-surface').addEventListener('change',majVoies);
   $('#f-recherche').addEventListener('input',rendreMarche);
+  $('#r-go').addEventListener('click', lancerRecherche);
+  // les deux onglets doivent partir du même profil : on ne redemande pas ce qui est déjà saisi
+  try{
+    const pat = await api('/api/patrimoine');
+    const rev = (pat.revenus || {}).salaire_net_mensuel, aut = (pat.revenus || {}).autres;
+    const vie = (pat.depenses || []).reduce((s,d)=>s+(+d.montant||0), 0);
+    if (rev || aut) $('#r-revenus').value = Math.round((rev||0)+(aut||0));
+    if (vie) $('#r-vie').value = Math.round(vie);
+    if (pat.epargne) $('#r-apport').value = Math.round(pat.epargne);
+    if (pat.reserve) $('#r-reserve').value = Math.round(pat.reserve);
+    if (pat.taux_credit) $('#r-taux').value = pat.taux_credit;
+    const budget = (pat.epargne && pat.reserve ? +pat.epargne - +pat.reserve : 0);
+    if (budget > 0) $('#r-budget').value = Math.round(budget * 2.5);
+  }catch(e){ /* profil non renseigné : les valeurs par défaut du formulaire suffisent */ }
   $('#f-dep').addEventListener('change', e => chargeDepartement(e.target.value).catch(err => toast('département indisponible : ' + err.message)));
   ['#f-tri','#f-filtre'].forEach(s=>$(s).addEventListener('change',rendreMarche));
   // lien de démonstration : /?demo=1 remplit un bien d'exemple et tranche tout seul

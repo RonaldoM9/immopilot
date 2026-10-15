@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1920px; height:1080px; overflow:hidden;
+         font-family:Arial,Helvetica,sans-serif;
+         background:#0e1116; color:#e8ecf1; padding:30px 42px 24px; }
+  h1 { font-size:34px; font-weight:700; letter-spacing:-0.4px; }
+  .sub { font-size:15px; color:#8b97a6; margin-top:6px; }
+  .bar { height:3px; background:linear-gradient(90deg,#3d7eff,#19c37d 55%,#f2b13c);
+         margin:15px 0 17px; }
+  .cols { display:flex; gap:28px; align-items:flex-start; }
+  .col { flex:1; }
+  .col.wide { flex:1.1; }
+  .ct { font-size:13px; font-weight:700; letter-spacing:1.4px; color:#8b97a6;
+        text-transform:uppercase; margin-bottom:10px; }
+  .card { background:#161b23; border:1px solid #232b36; border-left:3px solid #3d7eff;
+          border-radius:5px; padding:10px 13px 10px; margin-bottom:9px; }
+  .card.g { border-left-color:#19c37d; }
+  .card.o { border-left-color:#f2b13c; }
+  .card.r { border-left-color:#e5484d; }
+  .n { font-size:11px; font-weight:700; color:#3d7eff; letter-spacing:1px; }
+  .card.g .n { color:#19c37d; } .card.o .n { color:#f2b13c; } .card.r .n { color:#e5484d; }
+  .h { font-size:17.5px; font-weight:700; margin:2px 0 5px; }
+  .b { font-size:13.5px; line-height:1.45; color:#b6c2d0; }
+  .mono { font-family:'DejaVu Sans Mono',Consolas,monospace; font-size:13px;
+          line-height:1.55; color:#c8d4e2; }
+  .pos { color:#19c37d; font-weight:700; } .warn { color:#f2b13c; font-weight:700; }
+  .neg { color:#e5484d; font-weight:700; } .v { color:#fff; font-weight:700; }
+  .tbl { width:100%; border-collapse:collapse; font-size:13px; }
+  .tbl td { padding:3px 0; border-bottom:1px solid #1e2530; color:#b6c2d0;
+            vertical-align:top; }
+  .tbl td:last-child { text-align:right; color:#fff; font-weight:700; white-space:nowrap;
+                       padding-left:10px; }
+  .foot { margin-top:14px; background:#1a1410; border:1px solid #3a2a16;
+          border-left:3px solid #f2b13c; border-radius:5px; padding:10px 14px;
+          font-size:13.5px; line-height:1.45; color:#e0c9a0; }
+  .foot b { color:#f2b13c; }
+  .tag { display:inline-block; font-size:11px; font-weight:700; padding:1px 7px;
+         border-radius:3px; background:#232b36; color:#8b97a6; margin-left:6px; }
+</style>
+</head>
+<body>
+
+<h1>Agent IA pour l'achat immobilier — licence aux professionnels</h1>
+<div class="sub">Architecture et cash flow potentiel &nbsp;·&nbsp; hypothèses à valider, pas des prévisions &nbsp;·&nbsp; 14 octobre 2026</div>
+<div class="bar"></div>
+
+<div class="cols">
+
+  <!-- ============ ARCHITECTURE ============ -->
+  <div class="col">
+    <div class="ct">Architecture — ce qui fait le travail</div>
+
+    <div class="card">
+      <div class="n">COUCHE 1</div>
+      <div class="h">Les données ouvertes</div>
+      <div class="mono">DVF <span class="v">·</span> ventes signées, prix réel au m²<br>
+      Cadastre IGN <span class="v">·</span> parcelles, surfaces, bâti<br>
+      BAN <span class="v">·</span> géocodage &nbsp;&nbsp; PLU <span class="v">·</span> constructibilité<br>
+      DPE / ADEME <span class="v">·</span> étiquettes &nbsp;&nbsp; Loyers <span class="v">·</span> zones tendues</div>
+      <div class="b" style="margin-top:5px">Gratuit, officiel, vérifiable. Aucune dépendance à un portail.</div>
+    </div>
+
+    <div class="card g">
+      <div class="n">COUCHE 2 &nbsp;·&nbsp; LE POINT CLÉ</div>
+      <div class="h">Le client apporte ses annonces</div>
+      <div class="b">Le professionnel colle le lien ou le texte. <b style="color:#19c37d">Zéro extraction, zéro scraping, zéro risque Hoguet.</b> Il a la carte et les mandats — le produit n'en a pas besoin.</div>
+    </div>
+
+    <div class="card o">
+      <div class="n">COUCHE 3</div>
+      <div class="h">Le moteur — l'agent</div>
+      <div class="mono">comparables de la rue <span class="v">·</span> DVF, ventes signées<br>
+      verdict sur le prix demandé <span class="v">·</span> au-dessus / au-dessous<br>
+      constructibilité <span class="v">·</span> ce qu'on peut bâtir<br>
+      simulation locative <span class="v">·</span> nu / meublé / par lots<br>
+      fiscalité <span class="v">·</span> déficit foncier, amortissement<br>
+      <span class="pos">cash-flow après impôt</span> <span class="v">·</span> la seule ligne qui compte</div>
+    </div>
+
+    <div class="card">
+      <div class="n">COUCHE 4</div>
+      <div class="h">La livraison</div>
+      <div class="b">Un dossier PDF par bien, un tableau de suivi des mandats, une alerte dès qu'un bien passe sous le seuil du client.</div>
+    </div>
+
+    <div class="card r">
+      <div class="n">CE QUE CE N'EST PAS</div>
+      <div class="b"><b style="color:#e5484d">Ni un chercheur d'annonces</b> — les portails sont fermés.<br>
+      <b style="color:#e5484d">Ni un intermédiaire</b> — le client agit, le logiciel assiste.<br>
+      <b style="color:#e5484d">Ni un estimateur</b> — ce marché est saturé et gratuit.</div>
+    </div>
+  </div>
+
+  <!-- ============ CASH FLOW ============ -->
+  <div class="col wide">
+    <div class="ct">Cash flow potentiel — la réalité des chiffres</div>
+
+    <div class="card o">
+      <div class="n">MARCHÉ ADRESSABLE <span class="tag">relevé 2026</span></div>
+      <table class="tbl">
+        <tr><td>Chasseurs immobiliers <span class="tag">≈ 200-300</span></td><td class="warn">niche</td></tr>
+        <tr><td>Agents immobiliers</td><td class="pos">dizaines de milliers</td></tr>
+        <tr><td>CGP / courtiers</td><td class="pos">dizaines de milliers</td></tr>
+      </table>
+      <div class="b" style="margin-top:6px">Le seul segment à forte valeur — le chasseur — est aussi le plus étroit. <b style="color:#f2b13c">C'est la contrainte qui définit le plafond.</b></div>
+    </div>
+
+    <div class="card">
+      <div class="n">PRIX DU MARCHÉ <span class="tag">SaaS immobilier 2026</span></div>
+      <table class="tbl">
+        <tr><td>Mandataire seul</td><td>49 - 150 €/mois</td></tr>
+        <tr><td>Agence 5 personnes</td><td>99 - 139 €/mois</td></tr>
+        <tr><td>Agence multi-sites</td><td>800 + €/mois</td></tr>
+      </table>
+      <div class="b" style="margin-top:6px">Un prix à 290 €/mois pour un solo serait hors marché. <b style="color:#fff">La fourchette tenable : 120-180 €/mois.</b></div>
+    </div>
+
+    <div class="card g">
+      <div class="n">TROIS SCÉNARIOS</div>
+      <table class="tbl">
+        <tr><td><b style="color:#fff">A</b> &nbsp;Chasseurs seuls<br><span style="font-size:12px;color:#8b97a6">20 cabinets × 150 €</span></td><td>3 000 €/mois<br><span style="font-size:12px;color:#8b97a6">36 k€/an</span></td></tr>
+        <tr><td><b style="color:#fff">B</b> &nbsp;Chasseurs + CGP<br><span style="font-size:12px;color:#8b97a6">30 × 150 € + 100 × 120 €</span></td><td class="pos">16 500 €/mois<br><span style="font-size:12px;color:#19c37d">198 k€/an</span></td></tr>
+        <tr><td><b style="color:#fff">C</b> &nbsp;Marque blanche à un CRM<br><span style="font-size:12px;color:#8b97a6">1 intégration × 5 000 €</span></td><td>5 000 €/mois<br><span style="font-size:12px;color:#8b97a6">60 k€/an</span></td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="n">STRUCTURE DE COÛTS</div>
+      <table class="tbl">
+        <tr><td>Tokens LLM + hébergement</td><td>100 - 400 €/mois</td></tr>
+        <tr><td>Données</td><td class="pos">gratuites</td></tr>
+        <tr><td>Développement</td><td class="warn">son temps</td></tr>
+        <tr><td>Support et accompagnement</td><td class="neg">le poste caché</td></tr>
+      </table>
+      <div class="b" style="margin-top:6px">Marge brute élevée, mais <b style="color:#fff">coût d'acquisition et support</b> élevés en B2B de niche.</div>
+    </div>
+
+    <div class="card">
+      <div class="n">FENÊTRE DE TEMPS</div>
+      <div class="mono">produit payable <span class="v">·</span> 6 à 12 mois<br>
+      premier euro <span class="v">·</span> 12 mois et plus<br>
+      <span class="warn">runway nécessaire</span> <span class="v">·</span> sans revenu, sur fonds propres</div>
+    </div>
+  </div>
+</div>
+
+<div class="foot">
+  <b>⚠️ Lecture honnête :</b> si l'on prend 100 % du marché des chasseurs, cela représente environ 1 M€ par an. <b>À cette taille, le projet n'est pas un candidat au capital-risque : c'est un revenu complémentaire, ou un business à taille humaine.</b> Les taux de conversion ci-dessus sont des hypothèses non validées. Le test décisif coûte trois coups de fil : montrer un dossier d'achat complet produit en cinq minutes à trois professionnels, et écouter ce qu'ils offrent pour l'avoir.
+</div>
+
+</body>
+</html>

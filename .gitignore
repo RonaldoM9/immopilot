@@ -1,0 +1,17 @@
+# ImmoPilot — ce qui ne doit jamais être publié
+
+# Donnees sources (52 Mo) : re-telechargeables, voir README section 9
+donnees/*.csv
+donnees/*.xlsx
+
+# Donnees personnelles : patrimoine, dossiers de la maison de Ronald
+webapp/data/mon_patrimoine.json
+webapp/data/serveur.log
+livrables/dossier_maison_*.md
+livrables/estimation_maison_*.md
+livrables/Caddyfile*.bak
+
+# Divers
+__pycache__/
+*.pyc
+.DS_Store

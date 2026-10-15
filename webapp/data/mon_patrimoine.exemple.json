@@ -1,0 +1,38 @@
+{
+  "_lisez_moi": "Copier ce fichier en webapp/data/mon_patrimoine.json et renseigner les montants reels. Sans ces entrees, tout verdict de tresorerie est faux : le moteur ne devine aucun chiffre personnel.",
+  "biens": [
+    {
+      "nom": "Residence principale",
+      "commune": "Ecouen",
+      "type": "Maison",
+      "surface": null,
+      "terrain": null,
+      "annee_achat": null,
+      "prix_achat": null,
+      "valeur_estimee": null,
+      "loyer_mensuel": 0,
+      "charges_annuelles": null,
+      "note": "surface exacte, terrain, taxe fonciere, travaux recents"
+    }
+  ],
+  "credits": [
+    {
+      "objet": "Credit immobilier principal",
+      "mensualite": null,
+      "capital_restant_du": null,
+      "taux": null
+    }
+  ],
+  "depenses": [
+    { "poste": "budget de vie mensuel (alimentation, transport, sante, loisirs)", "montant": null },
+    { "poste": "charges fixes du logement (energie, eau, assurance, taxe)", "montant": null }
+  ],
+  "revenus": { "salaire_net_mensuel": null, "autres": 0 },
+  "tmi": 0.3,
+  "epargne": null,
+  "reserve": null,
+  "taux_credit": 3.5,
+  "duree_annees": 20,
+  "assurance_pct": 0.3,
+  "taux_d_endettement_max": 35
+}

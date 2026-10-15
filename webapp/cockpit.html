@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>ImmoPilot — cockpit personnel</title>
+<style>
+:root{--bg:#08131f;--panel:#112335;--panel2:#172c40;--border:#294255;--text:#f3f7fa;--muted:#98afc0;
+--accent:#5de3c5;--blue:#7bbaff;--warn:#ffcc7b;--red:#ff928e;--violet:#b39bff;--radius:16px;
+font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(130deg,#07111a,#0e1e31 54%,#08131e);color:var(--text);min-height:100vh}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.shell{max-width:1340px;margin:0 auto;padding:24px 24px 70px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:center;margin-bottom:22px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:13px}
+.logo{width:44px;height:44px;background:var(--accent);color:#07231f;display:grid;place-items:center;border-radius:13px;font-size:23px;font-weight:900}
+.brand h1{margin:0;font-size:23px;letter-spacing:-.8px}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}
+.pill{border:1px solid #407367;color:var(--accent);background:#153c36;padding:7px 12px;border-radius:99px;font-size:12px;white-space:nowrap}
+.pill.grey{border-color:#3c5667;color:var(--muted);background:#1a2c3d}
+.nav{display:flex;gap:6px;overflow:auto;margin-bottom:22px;border-bottom:1px solid var(--border);padding-bottom:9px}
+.nav button{background:transparent;color:var(--muted);border:0;padding:11px 16px;border-radius:10px;white-space:nowrap}
+.nav button.active{color:#08251f;background:var(--accent);font-weight:800}
+.page{display:none}.page.active{display:block}
+.hero{margin-bottom:18px}
+.hero h2{font-size:27px;letter-spacing:-.7px;margin:0 0 6px}
+.hero p{margin:0;color:var(--muted);font-size:14px;line-height:1.55;max-width:900px}
+.grid{display:grid;gap:13px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:18px;min-width:0}
+.card.soft{background:var(--panel2)}
+.card h3{margin:0 0 12px;font-size:15px;letter-spacing:-.2px}
+.card h4{margin:14px 0 8px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+.section{margin-top:16px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field label{color:var(--muted);font-size:12px}
+input,select,textarea{background:#0c1d2b;border:1px solid #385265;border-radius:10px;padding:10px 11px;color:var(--text);width:100%}
+input:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px}
+input::placeholder{color:#7892a6}
+.formgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px}
+.formgrid.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.formgrid.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.btn{background:var(--accent);border:1px solid var(--accent);border-radius:10px;padding:11px 16px;color:#08231e;font-weight:800}
+.btn.secondary{background:#223a4b;color:var(--text);border-color:#3c5667}
+.btn.ghost{background:transparent;color:var(--muted);border-color:#3c5667}
+.btn.small{padding:6px 10px;font-size:12px}
+.actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.muted{color:var(--muted)}.sm{font-size:12px;line-height:1.5}
+.mint{color:var(--accent)}.warn{color:var(--warn)}.danger{color:var(--red)}.blue{color:var(--blue)}
+.metric .l{font-size:12px;color:var(--muted)}
+.metric .v{margin:7px 0;font-size:24px;font-weight:800;letter-spacing:-.6px}
+.metric .s{font-size:12px;color:var(--muted)}
+.verdict{border-radius:var(--radius);padding:20px 22px;border:1px solid var(--border);background:var(--panel)}
+.verdict h2{margin:0 0 4px;font-size:34px;letter-spacing:-1px}
+.v-acheter{border-color:#2f7d68;background:linear-gradient(120deg,#0f2f2a,#112335)}
+.v-negocier{border-color:#8a7434;background:linear-gradient(120deg,#2f2713,#112335)}
+.v-non{border-color:#8a4643;background:linear-gradient(120deg,#2e1618,#112335)}
+.v-indetermine{border-color:#3c5667;background:linear-gradient(120deg,#1a2634,#112335)}
+ul.raisons{margin:10px 0 0;padding-left:20px;font-size:14px;line-height:1.65}
+ul.raisons li{margin-bottom:3px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid #22384a;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.best td{background:#153c36;color:var(--text);font-weight:600}
+.scroll{max-height:340px;overflow:auto}
+.tag{display:inline-block;font-size:11px;padding:3px 8px;border-radius:99px;border:1px solid #3c5667;color:var(--muted);margin-right:5px}
+.tag.ok{border-color:#2f7d68;color:var(--accent);background:#153c36}
+.tag.ko{border-color:#8a4643;color:var(--red);background:#2e1618}
+.tag.mid{border-color:#8a7434;color:var(--warn);background:#2f2713}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #22384a;font-size:13px}
+.kv:last-child{border-bottom:0}
+.kv span:first-child{color:var(--muted)}
+.kv span:last-child{font-variant-numeric:tabular-nums;text-align:right}
+.bar{height:7px;border-radius:99px;background:#22384a;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.bar i.warn{background:var(--warn)}.bar i.danger{background:var(--red)}
+.note{background:#12283a;border-left:3px solid var(--accent);padding:11px 13px;border-radius:8px;font-size:13px;line-height:1.55;margin-top:12px}
+.note.warn{border-left-color:var(--warn)}
+.note.danger{border-left-color:var(--red)}
+code{background:#0c1d2b;padding:1px 6px;border-radius:6px;font-size:12px}
+.toast{position:fixed;right:20px;bottom:20px;background:#153c36;border:1px solid #2f7d68;color:var(--text);padding:12px 16px;border-radius:11px;font-size:13px;opacity:0;transition:.25s;pointer-events:none}
+.toast.on{opacity:1}
+.spin{opacity:.55}
+@media(max-width:1000px){.g4,.g3,.formgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.g4,.g3,.g2,.formgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header>
+  <div class="brand">
+    <div class="logo">◆</div>
+    <div>
+      <h1>ImmoPilot <span class="muted sm">alpha</span></h1>
+      <p>Moteur déterministe · le modèle de langage ne calcule rien</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span class="pill" id="pillMoteur">moteur —</span>
+    <span class="pill grey" id="pillBanc">banc —</span>
+  </div>
+</header>
+
+<div class="nav">
+  <button class="active" data-page="decider">Décider</button>
+  <button data-page="marche">Mon marché</button>
+  <button data-page="foyer">Mon foyer</button>
+  <button data-page="methode">Méthode &amp; limites</button>
+</div>
+
+<!-- ==================================================== DECIDER -->
+<div class="page active" id="page-decider">
+  <div class="hero">
+    <h2>Un bien, un chiffre, un verdict</h2>
+    <p>Renseigne le bien et le prix demandé. Le moteur calcule les comparables de la rue et de la
+    commune, la valeur, le loyer de référence, la fiscalité des trois régimes, la mensualité et
+    la trésorerie du foyer — puis tranche. Il sait dire non.</p>
+  </div>
+
+  <div class="card">
+    <h3>Le bien</h3>
+    <div class="formgrid">
+      <div class="field"><label>Commune</label><input id="f-commune" list="dl-communes" placeholder="Groslay"></div>
+      <div class="field"><label>Voie (optionnel)</label><input id="f-voie" list="dl-voies" placeholder="RUE DU GENERAL LECLERC"></div>
+      <div class="field"><label>Type</label><select id="f-type"><option>Appartement</option><option>Maison</option></select></div>
+      <div class="field"><label>Surface habitable (m²)</label><input id="f-surface" type="number" step="1" value="30"></div>
+      <div class="field"><label>Terrain (m², maisons)</label><input id="f-terrain" type="number" step="1" value="0"></div>
+      <div class="field"><label>Prix demandé (€)</label><input id="f-prix" type="number" step="500" value="110000"></div>
+      <div class="field"><label>Loyer mensuel HC (€) <span class="muted">— vide = référence</span></label><input id="f-loyer" type="number" step="10" placeholder="auto"></div>
+      <div class="field"><label>Travaux (€)</label><input id="f-travaux" type="number" step="1000" value="0"></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btn-trancher">Trancher</button>
+      <button class="btn secondary" id="btn-md" disabled>Copier le dossier (markdown)</button>
+      <span class="sm muted" id="etat-decider"></span>
+    </div>
+  </div>
+
+  <div class="section" id="resultat"></div>
+</div>
+
+<!-- ==================================================== MARCHE -->
+<div class="page" id="page-marche">
+  <div class="hero">
+    <h2>Mon marché — 95, données ouvertes</h2>
+    <p>DVF (actes notariés, 2021-2025, prix actualisés) et carte des loyers du ministère.
+    Chaque ligne dit combien de ventes la soutiennent : une médiane sur 2 ventes n'est pas un prix.</p>
+  </div>
+  <div class="card">
+    <div class="formgrid c3">
+      <div class="field"><label>Rechercher une commune</label><input id="f-recherche" placeholder="ecouen, garges…"></div>
+      <div class="field"><label>Trier par</label><select id="f-tri">
+        <option value="rendement">rendement brut</option>
+        <option value="median_m2">prix au m² (croissant)</option>
+        <option value="n">nombre de ventes</option>
+        <option value="nom">nom</option></select></div>
+      <div class="field"><label>Filtre</label><select id="f-filtre">
+        <option value="solides">échantillons solides seulement</option>
+        <option value="tous">toutes les communes</option></select></div>
+    </div>
+  </div>
+  <div class="section card">
+    <h3 id="titre-marche">Communes</h3>
+    <div class="scroll"><table id="table-marche"></table></div>
+    <div class="note sm" id="note-marche"></div>
+  </div>
+  <div class="section card" id="bloc-voies" style="display:none">
+    <h3 id="titre-voies">Voies</h3>
+    <div class="scroll"><table id="table-voies"></table></div>
+    <p class="sm muted">Le prix se joue rue par rue : dans la même commune, l'écart entre deux voies
+    dépasse souvent 40 %. C'est le seul niveau où un prix se défend.</p>
+  </div>
+</div>
+
+<!-- ==================================================== FOYER -->
+<div class="page" id="page-foyer">
+  <div class="hero">
+    <h2>Mon foyer — et la seule ligne qui compte</h2>
+    <p>Ce que le foyer encaisse, ce qu'il dépense, ce qu'il reste. Un crédit ne se juge pas sur un
+    taux d'endettement mais sur le solde mensuel après la mensualité.</p>
+  </div>
+  <div class="grid g3" id="synthese-foyer"></div>
+
+  <div class="section grid g2">
+    <div class="card">
+      <h3>Mes biens</h3>
+      <div id="liste-biens"></div>
+      <div class="actions"><button class="btn ghost small" id="btn-add-bien">+ ajouter un bien</button></div>
+    </div>
+    <div class="card">
+      <h3>Mes crédits</h3>
+      <div id="liste-credits"></div>
+      <div class="actions"><button class="btn ghost small" id="btn-add-credit">+ ajouter un crédit</button></div>
+      <h4>Mes dépenses mensuelles</h4>
+      <div id="liste-depenses"></div>
+      <div class="actions"><button class="btn ghost small" id="btn-add-depense">+ ajouter un poste</button></div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <h3>Revenus, épargne, hypothèses</h3>
+    <div class="formgrid">
+      <div class="field"><label>Salaire net mensuel (€)</label><input id="p-salaire" type="number" step="50"></div>
+      <div class="field"><label>Autres revenus (€/mois)</label><input id="p-autres" type="number" step="50"></div>
+      <div class="field"><label>Épargne mobilisable (€)</label><input id="p-epargne" type="number" step="1000"></div>
+      <div class="field"><label>Réserve de sécurité (€)</label><input id="p-reserve" type="number" step="1000"></div>
+      <div class="field"><label>Tranche marginale d'imposition</label><select id="p-tmi">
+        <option value="0.11">11 %</option><option value="0.30">30 %</option>
+        <option value="0.41">41 %</option><option value="0.45">45 %</option></select></div>
+      <div class="field"><label>Taux du crédit (%)</label><input id="p-taux" type="number" step="0.05" value="3.5"></div>
+      <div class="field"><label>Durée (années)</label><input id="p-duree" type="number" step="1" value="20"></div>
+      <div class="field"><label>Assurance emprunteur (%)</label><input id="p-assurance" type="number" step="0.01" value="0.30"></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btn-save-patrimoine">Enregistrer</button>
+      <span class="sm muted" id="etat-foyer"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ==================================================== METHODE -->
+<div class="page" id="page-methode">
+  <div class="hero">
+    <h2>Méthode, règles de refus, limites</h2>
+    <p>Ce que le moteur fait, ce qu'il refuse de faire, et ce qu'il ne sait pas.</p>
+  </div>
+  <div class="grid g2">
+    <div class="card">
+      <h3>Les six règles de refus</h3>
+      <ul class="raisons">
+        <li>Moins de <b>5 ventes comparables</b> : le moteur refuse de trancher.</li>
+        <li>Écart interquartile au-delà de <b>45 %</b> ou confiance sous <b>0,45</b> : pas de verdict.</li>
+        <li>Prix demandé <b>&gt; 15 % au-dessus</b> du marché du périmètre, à surface comparable : NON.</li>
+        <li>Cash-flow après impôt <b>négatif en moyenne sur dix ans</b> : NON.</li>
+        <li>Solde mensuel du foyer <b>négatif après la mensualité</b> : NON.</li>
+        <li>Sinon ACHETER ; entre +5 % et +15 %, NÉGOCIER à un prix cible chiffré.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Ce que le moteur fait vraiment</h3>
+      <ul class="raisons">
+        <li>Comparables lus dans les <b>actes notariés</b> (DVF), pas dans les annonces.</li>
+        <li>Prix <b>actualisés</b> au niveau 2025 (le 95 a perdu 13 % depuis 2022).</li>
+        <li>Bande de <b>surface comparable</b> (± 35 %) : jamais une maison de 40 m² pour juger 100 m².</li>
+        <li>Valeur par <b>modèle taille + terrain</b> quand le périmètre est trop mince.</li>
+        <li>Fiscalité comparée sur <b>trois régimes</b> et <b>dix ans</b>, pas sur la première année.</li>
+        <li>Tout chiffre est <b>ouvrable</b> : chaque dossier embarque la liste des actes.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Ce que ce n'est pas</h3>
+      <ul class="raisons">
+        <li><b>Pas un conseil fiscal</b> : mécanique indicative, à valider par un expert-comptable.</li>
+        <li><b>Pas un avis d'expert</b> : DVF = prix d'acte, hors état réel du bien.</li>
+        <li>Ni DPE, ni état de copropriété, ni travaux votés : à vérifier sur place.</li>
+        <li>Le DPE, les servitudes et le bruit ne sont pas dans les données publiques exploitées ici.</li>
+        <li>Pas d'annonces : le scraping d'annonces est illégal (Jinka, 200 000 € en 2026).</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Sources et état</h3>
+      <div class="kv"><span>Prix</span><span>DVF Etalab, 2021-2025, Val-d'Oise</span></div>
+      <div class="kv"><span>Loyers</span><span>carte des loyers, ministère du Logement</span></div>
+      <div class="kv"><span>Moteur</span><span id="m-version">—</span></div>
+      <div class="kv"><span>Banc d'essai</span><span id="m-banc">—</span></div>
+      <div class="kv"><span>Données de marché</span><span id="m-marche">—</span></div>
+      <div class="note warn sm">Rappel de conception : l'interface n'additionne rien. Elle affiche
+      ce que le moteur Python renvoie. Un écran ne doit jamais devenir une autorité.</div>
+    </div>
+  </div>
+</div>
+</div>
+<div class="toast" id="toast"></div>
+<datalist id="dl-communes"></datalist><datalist id="dl-voies"></datalist>
+
+<script>
+const $ = s => document.querySelector(s);
+const euro = n => (n===null||n===undefined||isNaN(n)) ? '—' : Math.round(n).toLocaleString('fr-FR')+' €';
+const num = n => (n===null||n===undefined||isNaN(n)) ? '—' : Math.round(n).toLocaleString('fr-FR');
+const pct = (n,d=1) => (n===null||n===undefined||isNaN(n)) ? '—' : (+n).toFixed(d).replace('.',',')+' %';
+const esc = s => String(s??'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let MARCHE=null, PAT=null, DOS=null;
+// le cockpit peut être servi sous un chemin (https://timeheroes.fr/immo) : on préfixe les appels
+const BASE = location.pathname.replace(/\/(index\.html)?$/, '').replace(/\/$/, '');
+
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2600);}
+async function api(route, body, texte){
+  const opt = body ? {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)} : {};
+  const r = await fetch(BASE + route, opt);
+  if(!r.ok) throw new Error(await r.text());
+  return texte ? r.text() : r.json();
+}
+document.querySelectorAll('.nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active'); $('#page-'+b.dataset.page).classList.add('active');
+  if(b.dataset.page==='marche') rendreMarche();
+  if(b.dataset.page==='foyer') rendreFoyer();
+});
+
+/* ------------------------------------------------------------------ DECIDER */
+function entree(){
+  const profil = {
+    revenus_mensuels:+$('#p-salaire').value + +($('#p-autres').value||0),
+    budget_de_vie: (PAT?.depenses||[]).reduce((s,d)=>s+(+d.montant||0),0),
+    charges_recurrentes:0,
+    mensualites_existantes:(PAT?.credits||[]).reduce((s,c)=>s+(+c.mensualite||0),0),
+    epargne:+$('#p-epargne').value||0, reserve:+$('#p-reserve').value||0,
+    tmi:+$('#p-tmi').value, taux:+$('#p-taux').value||3.5, annees:+$('#p-duree').value||20,
+    assurance_pct:+$('#p-assurance').value||0.30
+  };
+  const charges = (PAT?.biens||[]).filter(b=>b.commune&&b.commune.toLowerCase()===($('#f-commune').value||'').toLowerCase())
+                    .reduce((s,b)=>s+(+b.charges_annuelles||0),0);
+  return {commune:$('#f-commune').value.trim(), voie:$('#f-voie').value.trim()||null,
+    type:$('#f-type').value, surface:+$('#f-surface').value, terrain:+$('#f-terrain').value||0,
+    prix_demande:+$('#f-prix').value, loyer_mensuel_ht:+$('#f-loyer').value||null,
+    profil, exploitation:{charges_annuelles:charges, taxe_fonciere:900, entretien_annuel:400,
+      vacance_pct:5, impaye_pct:2, travaux:+$('#f-travaux').value||0, mobilier:0}};
+}
+$('#btn-trancher').onclick = async () => {
+  const c = entree();
+  if(!c.commune || !c.surface || !c.prix_demande){ toast('commune, surface et prix sont nécessaires'); return; }
+  $('#etat-decider').textContent='calcul…'; $('#resultat').classList.add('spin');
+  try{
+    DOS = await api('/api/dossier', {dossier:c});
+    rendreDossier(DOS); $('#btn-md').disabled=false;
+    $('#etat-decider').textContent = `moteur : ${DOS._duree_ms} ms`;
+  }catch(e){ $('#resultat').innerHTML = `<div class="note danger">Erreur : ${esc(e.message)}</div>`; }
+  $('#resultat').classList.remove('spin');
+};
+$('#btn-md').onclick = async () => {
+  try{ const txt = await api('/api/dossier.md', {dossier:entree()}, true);
+    await navigator.clipboard.writeText(txt); toast('dossier markdown copié'); }
+  catch(e){ toast('copie impossible : '+e.message); }
+};
+
+function classeVerdict(v){ return {'ACHETER':'v-acheter','NÉGOCIER':'v-negocier','NON':'v-non'}[v] || 'v-indetermine'; }
+function rendreDossier(d){
+  const v = d.verdict, f = d.fiscalite, fin = d.financement, t = d.tresorerie;
+  const ref = d.comparables.reference || {};
+  const cf = v.cash_flow_apres_impot;
+  $('#resultat').innerHTML = `
+  <div class="verdict ${classeVerdict(v.verdict)}">
+    <h2>${esc(v.libelle || v.verdict)}</h2>
+    <div class="sm muted">confiance ${pct(v.confiance*100,0)} · ${esc(d.bien.commune)}
+      ${d.bien.voie?'· '+esc(d.bien.voie):''} · ${num(d.bien.surface)} m² à ${euro(d.bien.prix_demande)}
+      (${num(d.bien.prix_au_m2)} €/m²)${cf!==null&&cf!==undefined?` · cash-flow après impôt ${euro(cf)}/an`:''}</div>
+    <ul class="raisons">${v.raisons.map(r=>`<li>${esc(r)}</li>`).join('')}</ul>
+    ${v.prix_cible?`<div class="note">Prix cible de négociation : <b>${euro(v.prix_cible)}</b>
+      (${num(v.prix_cible/d.bien.surface)} €/m²)</div>`:''}
+  </div>
+
+  <div class="grid g4 section">
+    <div class="card metric"><div class="l">Marché du périmètre</div>
+      <div class="v">${num(v.prix_marche_m2)} €/m²</div>
+      <div class="s">${esc(d.comparables.perimetre)}
+      ${ref.n?`· ${ref.n} vente(s) · Q1 ${num(ref.q1)} – Q3 ${num(ref.q3)}`:''}</div></div>
+    <div class="card metric"><div class="l">Prix du bien selon le moteur</div>
+      <div class="v">${euro(v.prix_marche_bien)}</div>
+      <div class="s">prix demandé ${v.ecart_prix_pct>=0?'+':''}${pct(v.ecart_prix_pct)}
+      ${d.valeur_estimee?`· modèle : ${euro(d.valeur_estimee.valeur)} (± ${pct(d.valeur_estimee.sigma_pct,0)})`:''}</div></div>
+    <div class="card metric"><div class="l">Loyer de référence</div>
+      <div class="v">${d.loyer?num(d.loyer.loyer_m2)+' €/m²':'—'}</div>
+      <div class="s">${d.loyer?`retenu ${euro(d.loyer.loyer_mensuel_ht)}/mois · brut ${pct(d.loyer.rendement_brut,2)} · ${num(d.loyer.observations)} obs.`:'pas de référence'}</div></div>
+    <div class="card metric"><div class="l">Solde après crédit</div>
+      <div class="v ${t.faisable?'mint':'danger'}">${euro(t.solde_apres_credit)}/mois</div>
+      <div class="s">mensualité ${euro(fin.mensualite)} · disponible avant ${euro(t.disponible_avant_credit)}</div></div>
+  </div>
+
+  <div class="grid g2 section">
+    <div class="card"><h3>Financement</h3>
+      ${ligne('Prix',euro(fin.prix))}${ligne('Frais d\'acquisition',euro(fin.frais_acquisition))}
+      ${ligne('Besoin total',euro(fin.besoin_total))}${ligne('Apport mobilisé',euro(fin.apport))}
+      ${ligne('Capital emprunté',euro(fin.capital_emprunte))}${ligne('Mensualité (assurance comprise)',euro(fin.mensualite))}
+      ${ligne('Intérêts + assurance sur la durée',euro(fin.interets_et_assurance))}
+      ${ligne('Capacité d\'emprunt du foyer',euro(d.capacite.capital_empruntable)
+        +' · prix max '+euro(d.capacite.prix_max_bien))}
+    </div>
+    <div class="card"><h3>Trésorerie du foyer — le contrôle qui manquait</h3>
+      ${ligne('Disponible avant nouveau crédit',euro(t.disponible_avant_credit))}
+      ${ligne('Solde après nouveau crédit',euro(t.solde_apres_credit))}
+      <div class="note ${t.faisable?'':'danger'}">${esc(t.raison)}</div>
+      <p class="sm muted">La maquette du 15/10 validait un achat à 350 000 € pour un foyer à
+      +1 500 €/mois, alors que le solde réel tombait à −600 €/mois : la mensualité n'entrait dans
+      aucun calcul. C'est corrigé.</p>
+    </div>
+  </div>
+
+  <div class="card section"><h3>Fiscalité — trois régimes, deux horizons</h3>
+    <table><thead><tr><th>Régime</th><th class="num">Base imposable</th><th class="num">Impôt an 1</th>
+    <th class="num">Cash-flow an 1</th><th class="num">Cumul 10 ans</th><th class="num">Moyenne/an</th></tr></thead>
+    <tbody>${f.regimes.map(r=>`<tr class="${r.regime===f.meilleur_regime_sur_10_ans?'best':''}">
+      <td>${esc(r.regime)}${r.regime===f.meilleur_regime_sur_10_ans?' <span class="tag ok">retenu</span>':''}${r.deficit_impute_revenu_global?`<div class="sm muted">déficit imputé ${euro(r.deficit_impute_revenu_global)}</div>`:''}</td>
+      <td class="num">${r.base_imposable===null?'—':euro(r.base_imposable)}</td>
+      <td class="num">${r.impot===null?'—':euro(r.impot)}</td>
+      <td class="num">${euro(r.cash_flow_apres_impot)}</td>
+      <td class="num">${r.cumul_10_ans!==undefined?euro(r.cumul_10_ans):'—'}</td>
+      <td class="num">${r.cash_flow_moyen_10_ans!==undefined?euro(r.cash_flow_moyen_10_ans):'—'}</td></tr>`).join('')}</tbody></table>
+    <div class="note warn sm">${esc(f.avertissement)}</div>
+  </div>
+
+  <div class="grid g2 section">
+    <div class="card"><h3>Comparables retenus ${d.comparables.ventes_rue?.length?'— la rue':''}</h3>
+      ${tableauVentes(d.comparables.ventes_rue?.length?d.comparables.ventes_rue:d.comparables.ventes_commune)}
+      <p class="sm muted">${d.comparables.ventes_rue?.length?'Ventes de la voie.':'Ventes de la commune (aucune voie comparable renseignée).'}</p></div>
+    <div class="card"><h3>Prix par voie — là où se joue la décision</h3>
+      ${d.prix_par_voie?tableauVoies(d.prix_par_voie):'<p class="sm muted">Une voie précise a été renseignée : les comparables de la rue primeront sur la commune.</p>'}
+    </div>
+  </div>`;
+}
+const ligne = (k,v) => `<div class="kv"><span>${esc(k)}</span><span>${v}</span></div>`;
+function tableauVentes(ventes){
+  if(!ventes || !ventes.length) return '<p class="sm muted">Aucune vente comparable.</p>';
+  return `<div class="scroll"><table><thead><tr><th>Date</th><th>Voie</th><th class="num">Surface</th>
+    <th class="num">Prix</th><th class="num">€/m²</th></tr></thead><tbody>${ventes.map(x=>`<tr>
+    <td>${esc((x.date||'').slice(0,10))}</td><td>${esc((x.numero?x.numero+' ':'')+(x.voie||''))}</td>
+    <td class="num">${num(x.surface)} m²</td><td class="num">${euro(x.valeur)}</td>
+    <td class="num">${num(x.eur_m2)}${x.eur_m2_brut&&Math.abs(x.eur_m2_brut-x.eur_m2)>50?` <span class="sm muted">(acte ${num(x.eur_m2_brut)})</span>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+}
+function tableauVoies(voies){
+  if(!voies.length) return '<p class="sm muted">Aucune voie avec au moins 3 ventes.</p>';
+  return `<div class="scroll"><table><thead><tr><th>Voie</th><th class="num">Ventes</th>
+    <th class="num">Médiane €/m²</th><th class="num">Dispersion</th></tr></thead><tbody>${voies.map(v=>`<tr>
+    <td>${esc(v.voie)}</td><td class="num">${v.n}</td><td class="num">${num(v.median_eur_m2)}</td>
+    <td class="num">${pct(v.dispersion,0)}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+/* ------------------------------------------------------------------ MARCHE */
+function rendreMarche(){
+  if(!MARCHE){ $('#table-marche').innerHTML='<tr><td class="muted">chargement…</td></tr>'; return; }
+  const q = ($('#f-recherche').value||'').toLowerCase();
+  const tri = $('#f-tri').value, filtre = $('#f-filtre').value;
+  let lignes = MARCHE.communes.filter(c=>c.appart)
+    .filter(c=>!q || c.nom.toLowerCase().includes(q))
+    .filter(c=>filtre==='tous' || (c.appart.n>=5 && c.appart.dispersion<=45));
+  const cle = tri==='nom' ? null : tri;
+  lignes.sort((a,b)=>{ if(!cle) return a.nom.localeCompare(b.nom);
+    if(cle==='rendement') return (b.appart.rendement_brut||0)-(a.appart.rendement_brut||0);
+    if(cle==='n') return b.appart.n-a.appart.n; return a.appart.median_m2-b.appart.median_m2; });
+  $('#titre-marche').textContent = `${lignes.length} communes retenues sur ${MARCHE.communes.length}`;
+  $('#table-marche').innerHTML = `<thead><tr><th>Commune</th><th class="num">Ventes</th>
+    <th class="num">Médiane €/m²</th><th class="num">Q1 – Q3</th><th class="num">Dispersion</th>
+    <th class="num">Loyer €/m²</th><th class="num">Rendement brut</th><th></th></tr></thead>
+    <tbody>${lignes.map((c,i)=>{const a=c.appart;const deg = a.rendement_brut>=9?'mint':(a.rendement_brut>=7?'':'warn');
+      return `<tr><td>${esc(c.nom)}</td><td class="num">${a.n}</td><td class="num">${num(a.median_m2)}</td>
+      <td class="num">${num(a.q1)} – ${num(a.q3)}</td><td class="num">${pct(a.dispersion,0)}</td>
+      <td class="num">${c.loyer?pct(c.loyer.loyer_m2,2):'—'}</td>
+      <td class="num ${deg}">${a.rendement_brut?pct(a.rendement_brut,2):'—'}</td>
+      <td><button class="btn ghost small" data-commune="${esc(c.nom)}">voies</button>
+      <button class="btn ghost small" data-decider="${esc(c.nom)}">étudier</button></td></tr>`;}).join('')}</tbody>`;
+  $('#note-marche').innerHTML = `Prix <b>actualisés au niveau 2025</b> (indice départemental :
+    ${Object.entries(MARCHE.indice_appartements).map(([a,v])=>`${a} × ${v}`).join(' · ')}) —
+    les médianes portent sur ${MARCHE.annees_reference.join('-')}, ou sur
+    ${MARCHE.annees_modele.join('-')} quand la commune est trop petite. Généré le ${esc(MARCHE.genere_le)}.`;
+  document.querySelectorAll('[data-commune]').forEach(b=>b.onclick=()=>montrerVoies(b.dataset.commune));
+  document.querySelectorAll('[data-decider]').forEach(b=>b.onclick=()=>{
+    $('#f-commune').value=b.dataset.decider; majVoies(); tab('decider'); });
+}
+function montrerVoies(nom){
+  const c = MARCHE.communes.find(x=>x.nom===nom); if(!c||!c.appart) return;
+  $('#bloc-voies').style.display='block';
+  $('#titre-voies').textContent = `${nom} — ${c.appart.voies.length} voies avec au moins 3 ventes`;
+  $('#table-voies').innerHTML = `<thead><tr><th>Voie</th><th class="num">Ventes</th>
+    <th class="num">Médiane €/m²</th><th class="num">Prix médian</th><th>Années</th></tr></thead>
+    <tbody>${c.appart.voies.map(v=>`<tr><td>${esc(v.nom)}</td><td class="num">${v.n}</td>
+    <td class="num">${num(v.median_m2)}</td><td class="num">${euro(v.median_prix)}</td>
+    <td>${esc(v.annees)}</td></tr>`).join('')}</tbody>`;
+  $('#bloc-voies').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function majVoies(){
+  const c = MARCHE?.communes.find(x=>x.nom.toLowerCase()===($('#f-commune').value||'').toLowerCase());
+  $('#dl-voies').innerHTML = (c?.appart?.voies||[]).map(v=>`<option value="${esc(v.nom)}">`).join('');
+  if(c?.appart && !+$('#f-loyer').value && c.loyer)
+    $('#f-loyer').placeholder = `${num(c.loyer.loyer_m2 * (+$('#f-surface').value||0))} € (référence)`;
+}
+
+/* ------------------------------------------------------------------ FOYER */
+function rendreFoyer(){
+  if(!PAT) return;
+  $('#p-salaire').value = PAT.revenus?.salaire_net_mensuel ?? '';
+  $('#p-autres').value = PAT.revenus?.autres ?? 0;
+  $('#p-epargne').value = PAT.epargne ?? ''; $('#p-reserve').value = PAT.reserve ?? '';
+  $('#p-tmi').value = String(PAT.tmi ?? 0.30);
+  const biens = PAT.biens||[], credits = PAT.credits||[], dep = PAT.depenses||[];
+  $('#liste-biens').innerHTML = biens.map((b,i)=>`<div class="card soft" style="margin-bottom:10px">
+    <div class="formgrid c2">
+      <div class="field"><label>Nom</label><input data-i="${i}" data-k="nom" value="${esc(b.nom||'')}"></div>
+      <div class="field"><label>Commune</label><input data-i="${i}" data-k="commune" list="dl-communes" value="${esc(b.commune||'')}"></div>
+      <div class="field"><label>Valeur estimée (€)</label><input data-i="${i}" data-k="valeur_estimee" type="number" value="${b.valeur_estimee??''}"></div>
+      <div class="field"><label>Loyer mensuel (€)</label><input data-i="${i}" data-k="loyer_mensuel" type="number" value="${b.loyer_mensuel??0}"></div>
+      <div class="field"><label>Charges annuelles (€)</label><input data-i="${i}" data-k="charges_annuelles" type="number" value="${b.charges_annuelles??''}"></div>
+      <div class="field"><label>Note</label><input data-i="${i}" data-k="note" value="${esc(b.note||'')}"></div>
+    </div>
+    <div class="actions"><button class="btn ghost small" data-del-bien="${i}">retirer</button></div></div>`).join('');
+  $('#liste-credits').innerHTML = credits.map((c,i)=>`<div class="card soft" style="margin-bottom:10px">
+    <div class="formgrid c2">
+      <div class="field"><label>Objet</label><input data-c="${i}" data-k="objet" value="${esc(c.objet||'')}"></div>
+      <div class="field"><label>Mensualité (€)</label><input data-c="${i}" data-k="mensualite" type="number" value="${c.mensualite??''}"></div>
+      <div class="field"><label>Capital restant dû (€)</label><input data-c="${i}" data-k="capital_restant_du" type="number" value="${c.capital_restant_du??''}"></div>
+      <div class="field"><label>Taux (%)</label><input data-c="${i}" data-k="taux" type="number" step="0.05" value="${c.taux??''}"></div>
+    </div>
+    <div class="actions"><button class="btn ghost small" data-del-credit="${i}">retirer</button></div></div>`).join('')
+    || '<p class="sm muted">Aucun crédit enregistré.</p>';
+  $('#liste-depenses').innerHTML = dep.map((d,i)=>`<div class="formgrid c2" style="margin-bottom:8px">
+    <div class="field"><input data-d="${i}" data-k="poste" value="${esc(d.poste||'')}"></div>
+    <div class="field"><input data-d="${i}" data-k="montant" type="number" value="${d.montant??''}"></div></div>`).join('');
+  majSyntheseFoyer();
+}
+function majSyntheseFoyer(){
+  const salaire = (+$('#p-salaire').value||0) + (+$('#p-autres').value||0);
+  const budget = (PAT.depenses||[]).reduce((s,d)=>s+(+d.montant||0),0);
+  const mensualites = (PAT.credits||[]).reduce((s,c)=>s+(+c.mensualite||0),0);
+  const loyers = (PAT.biens||[]).reduce((s,b)=>s+(+b.loyer_mensuel||0),0);
+  const charges = (PAT.biens||[]).reduce((s,b)=>s+(+b.charges_annuelles||0),0)/12;
+  const valeur = (PAT.biens||[]).reduce((s,b)=>s+(+b.valeur_estimee||0),0);
+  const capital = (PAT.credits||[]).reduce((s,c)=>s+(+c.capital_restant_du||0),0);
+  const dispo = salaire + loyers - budget - mensualites - charges;
+  const endett = salaire ? mensualites/salaire*100 : 0;
+  const c = dispo < 0 ? 'danger' : (dispo < 300 ? 'warn' : 'mint');
+  $('#synthese-foyer').innerHTML = `
+    <div class="card metric"><div class="l">Disponible mensuel réel</div>
+      <div class="v ${c}">${euro(dispo)}</div>
+      <div class="s">revenus ${euro(salaire)} + loyers ${euro(loyers)} − budget ${euro(budget)}
+      − mensualités ${euro(mensualites)} − charges ${euro(charges)}</div></div>
+    <div class="card metric"><div class="l">Taux d'endettement</div>
+      <div class="v ${endett>35?'danger':''}">${pct(endett,1)}</div>
+      <div class="bar"><i class="${endett>35?'danger':''}" style="width:${Math.min(endett/50*100,100)}%"></i></div>
+      <div class="s">mensualités ${euro(mensualites)} sur ${euro(salaire)} de revenus</div></div>
+    <div class="card metric"><div class="l">Patrimoine net</div>
+      <div class="v">${euro(valeur-capital)}</div>
+      <div class="s">biens ${euro(valeur)} − capital restant dû ${euro(capital)}</div></div>`;
+}
+['#p-salaire','#p-autres'].forEach(s=>$(s).addEventListener('input',majSyntheseFoyer));
+document.addEventListener('input', e => {
+  const t = e.target;
+  if(t.dataset.k && (t.dataset.i!==undefined)){
+    if(t.dataset.c!==undefined) PAT.credits[+t.dataset.c][t.dataset.k] = t.value;
+    else if(t.dataset.d!==undefined) PAT.depenses[+t.dataset.d][t.dataset.k] = t.value;
+    else PAT.biens[+t.dataset.i][t.dataset.k] = t.value;
+    majSyntheseFoyer();
+  }
+});
+document.addEventListener('click', e => {
+  const t = e.target;
+  if(t.id==='btn-add-bien'){ PAT.biens.push({nom:'',commune:'',valeur_estimee:null,loyer_mensuel:0,charges_annuelles:null,note:''}); rendreFoyer(); }
+  if(t.id==='btn-add-credit'){ PAT.credits.push({objet:'',mensualite:null,capital_restant_du:null,taux:null}); rendreFoyer(); }
+  if(t.id==='btn-add-depense'){ PAT.depenses.push({poste:'',montant:null}); rendreFoyer(); }
+  if(t.dataset.delBien!==undefined && t.dataset.delBien){ PAT.biens.splice(+t.dataset.delBien,1); rendreFoyer(); }
+  if(t.dataset.delCredit!==undefined && t.dataset.delCredit){ PAT.credits.splice(+t.dataset.delCredit,1); rendreFoyer(); }
+});
+$('#btn-save-patrimoine').onclick = async () => {
+  PAT.revenus = {salaire_net_mensuel:+$('#p-salaire').value||0, autres:+$('#p-autres').value||0};
+  PAT.epargne = +$('#p-epargne').value||0; PAT.reserve = +$('#p-reserve').value||0;
+  PAT.tmi = +$('#p-tmi').value;
+  PAT.taux_credit = +$('#p-taux').value||3.5; PAT.duree_annees = +$('#p-duree').value||20;
+  PAT.assurance_pct = +$('#p-assurance').value||0.30;
+  Object.keys(PAT).forEach(k=>{ if(PAT[k]===null) PAT[k] = undefined; });
+  try{ const r = await api('/api/patrimoine', PAT);
+    $('#etat-foyer').textContent = 'enregistré à '+r.maj; toast('patrimoine enregistré');
+    majSyntheseFoyer();
+  }catch(e){ toast('échec : '+e.message); }
+};
+
+/* ------------------------------------------------------------------ DEMARRAGE */
+function tab(nom){
+  document.querySelectorAll('.nav button').forEach(x=>x.classList.toggle('active', x.dataset.page===nom));
+  document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active', x.id==='page-'+nom));
+}
+(async function(){
+  try{
+    const s = await api('/api/sante');
+    $('#pillMoteur').textContent = 'moteur '+s.moteur;
+    $('#pillBanc').textContent = 'banc d\'essai '+s.banc_essai;
+    $('#m-version').textContent = s.moteur+' — python, hors modèle de langage';
+    $('#m-banc').textContent = s.banc_essai+' (20 dossiers dont 5 pièges, 6 contrôles de données)';
+  }catch(e){ $('#pillMoteur').textContent='moteur injoignable'; }
+  try{
+    MARCHE = await api('/api/marche');
+    $('#dl-communes').innerHTML = MARCHE.communes.map(c=>`<option value="${esc(c.nom)}">`).join('');
+    $('#m-marche').textContent = `${MARCHE.nb_communes} communes · ${MARCHE.nb_voies} voies · ${MARCHE.genere_le}`;
+    rendreMarche();
+  }catch(e){ $('#m-marche').textContent = 'données absentes : lancer scripts/exporte_marche.py'; }
+  try{ PAT = await api('/api/patrimoine'); rendreFoyer(); }catch(e){}
+  ['#f-commune'].forEach(s=>$(s).addEventListener('change',majVoies));
+  $('#f-surface').addEventListener('change',majVoies);
+  $('#f-recherche').addEventListener('input',rendreMarche);
+  ['#f-tri','#f-filtre'].forEach(s=>$(s).addEventListener('change',rendreMarche));
+  // lien de démonstration : /?demo=1 remplit un bien d'exemple et tranche tout seul
+  if(location.search.includes('demo')){
+    $('#f-commune').value='Groslay'; $('#f-surface').value=30; $('#f-prix').value=110000;
+    $('#f-loyer').value=637; majVoies(); $('#btn-trancher').click();
+  }
+})();
+</script>
+</body>
+</html>
